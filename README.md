@@ -1,1 +1,4 @@
-# chat_client
+## Chat Client   
+   
+Execution: 
+MainClient.java -> Run As -> Java Application
