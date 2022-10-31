@@ -11,21 +11,28 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import chatroom.domain.Channel;
 
 public class ChatClientGUI extends JFrame implements ActionListener {
 
@@ -34,20 +41,59 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
 	private static final Border BLANK_BORDER = BorderFactory.createEmptyBorder(10, 10, 20, 10);// top,r,b,l
 
-	private JPanel textPanel, inputPanel;
+	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
+	private static final String NEW_LINE = System.lineSeparator();
+	private static final String SINGLE_SPACE = " ";
+
 	private JTextField textField;
 	private String name, message;
 	private ChatClient chatClient;
 	private JList<String> userList, channelList;
 	private DefaultListModel<String> listModel;
 
-	protected JTextArea textArea, userArea;
+	protected JTextArea userArea;
 	protected JFrame frame;
 	protected JButton privateMsgButton, startButton, sendButton;
-	protected JPanel clientPanel, userPanel, chatTextPanel;
-	protected JTabbedPane channelPanel;
+	protected JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel;
+
+	protected Map<Channel, JTextArea> channelChatContents = new LinkedHashMap<>();
+	protected Channel selectedChannel;
+	protected JTextArea conversationTextArea;
+
+	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
+
+	/* This method should be provided by server */
+	public String[] getChannels() {
+		String[] channels = { "general", "off-topic", "middleware" };
+		return channels;
+	}
+
+	public JTextArea getCurrentTextArea() {
+		return channelChatContents.get(selectedChannel);
+	}
+
+	protected JTextArea createTextArea(String text) {
+		JTextArea textArea = new JTextArea(text, 14, 34);
+		textArea.setMargin(new Insets(1, 1, 1, 1));
+		textArea.setFont(MEIRYO_FONT_14);
+
+		textArea.setLineWrap(true);
+		textArea.setWrapStyleWord(true);
+		textArea.setEditable(false);
+		return textArea;
+	}
+
+	protected void initChannelContents(String... channelTitles) {
+		for (String channelTitle : channelTitles) {
+			String textAreaMessage = String.join(SINGLE_SPACE, WELCOME_MESSAGE, channelTitle, NEW_LINE);
+			this.channelChatContents.put(Channel.fromTitle(channelTitle), createTextArea(textAreaMessage));
+		}
+	}
 
 	public ChatClientGUI() {
+		String[] channelTitles = getChannels(); // provided by server
+		initChannelContents(channelTitles);
+		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
 		frame = new JFrame("Client Chat Console");
 
@@ -72,15 +118,19 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		Container container = getContentPane();
 		JPanel outerPanel = new JPanel(new BorderLayout());
-		
-		chatTextPanel = getTextPanel();
+
+		conversationTextArea = createTextArea(
+				String.join(SINGLE_SPACE, WELCOME_MESSAGE, selectedChannel.getTitle(), NEW_LINE));
+		textPanel = new JPanel(new BorderLayout());
+		textPanel.add(new JScrollPane(conversationTextArea));
+		textPanel.setFont(MEIRYO_FONT_14);
 
 		outerPanel.add(getInputPanel(), BorderLayout.CENTER);
-		outerPanel.add(chatTextPanel, BorderLayout.NORTH);
+		outerPanel.add(textPanel, BorderLayout.NORTH);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
-		channelPanel = getChannelPanel();
-		
+		channelPanel = getChannelPanel(channelTitles);
+
 		leftPanel.add(channelPanel, BorderLayout.NORTH);
 		leftPanel.add(getUsersPanel(), BorderLayout.SOUTH);
 
@@ -96,28 +146,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		frame.setVisible(true);
-	}
-
-	/**
-	 * Method to set up the JPanel to display the chat text
-	 * 
-	 * @return
-	 */
-	public JPanel getTextPanel() {
-		String welcome = "Welcome enter your name and press Start to begin\n";
-		textArea = new JTextArea(welcome, 14, 34);
-		textArea.setMargin(new Insets(1, 1, 1, 1));
-		textArea.setFont(MEIRYO_FONT_14);
-
-		textArea.setLineWrap(true);
-		textArea.setWrapStyleWord(true);
-		textArea.setEditable(false);
-		JScrollPane scrollPane = new JScrollPane(textArea);
-		textPanel = new JPanel(new BorderLayout());
-		textPanel.add(scrollPane);
-
-		textPanel.setFont(MEIRYO_FONT_14);
-		return textPanel;
 	}
 
 	/**
@@ -164,22 +192,51 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * 
 	 * @return JPanel channel list panel
 	 */
-	public JTabbedPane getChannelPanel() {
+	public JPanel getChannelPanel(String... channels) {
 
-		channelPanel = new JTabbedPane();
-		String pannelTitle = "TEXT CHANNELS";
+		channelPanel = new JPanel(new BorderLayout());
+		String pannelTitle = "Channels";
 
 		JLabel channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
 		channelPanel.add(channelLabel, BorderLayout.NORTH);
 		channelLabel.setFont(MEIRYO_FONT_16);
 
-		String[] channels = { "general", "off-topic", "middleware" };
-		setChannelPanel(channels);
+		DefaultListModel<String> channelListModel = new DefaultListModel<String>();
+		channelListModel.addAll(Arrays.asList(channels));
+
+		// Create the list and put it in a scroll pane.
+		channelList = new JList<String>(channelListModel);
+		channelList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		channelList.setVisibleRowCount(8);
+		channelList.setFont(MEIRYO_FONT_14);
+		channelList.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent event) {
+				if (!event.getValueIsAdjusting()) {
+					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
+					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
+					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+
+					System.out.println("Selected channel + " + selectedChannel);
+				}
+			}
+		});
+		channelList.setSelectedIndex(0); // first channel general by default
+		channelPanel.add(new JScrollPane(channelList), BorderLayout.CENTER);
 
 		channelPanel.setFont(MEIRYO_FONT_14);
 		channelPanel.setBorder(BLANK_BORDER);
 
 		return channelPanel;
+	}
+
+	protected JComponent makeTextPanel(String text) {
+		JPanel panel = new JPanel(false);
+		JLabel filler = new JLabel(text);
+		filler.setHorizontalAlignment(JLabel.CENTER);
+		panel.setLayout(new GridLayout(1, 1));
+		panel.add(filler);
+		return panel;
 	}
 
 	/**
@@ -206,23 +263,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		clientPanel.add(listScrollPane, BorderLayout.CENTER);
 		userPanel.add(clientPanel, BorderLayout.CENTER);
-	}
-
-	/**
-	 * Populate channels panel
-	 * 
-	 * @param channelTitles
-	 */
-	public void setChannelPanel(String[] channelTitles) {
-		DefaultListModel<String> channelListModel = new DefaultListModel<String>();
-		channelListModel.addAll(Arrays.asList(channelTitles));
-
-		// Create the list and put it in a scroll pane.
-		channelList = new JList<String>(channelListModel);
-		channelList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		channelList.setVisibleRowCount(8);
-		channelList.setFont(MEIRYO_FONT_14);
-		channelPanel.add(new JScrollPane(channelList), BorderLayout.CENTER);
 	}
 
 	/**
@@ -264,7 +304,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				if (name.length() != 0) {
 					frame.setTitle(name + "'s console ");
 					textField.setText("");
-					textArea.append("username : " + name + " connecting to chat...\n");
+					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
 					getConnected(name);
 					if (!chatClient.connectionProblem) {
 						startButton.setEnabled(false);
@@ -326,7 +366,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			chatClient = new ChatClient(this, cleanedUserName);
 			chatClient.startClient();
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			log.severe(e.getMessage());
 		}
 	}
 }
