@@ -21,6 +21,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -43,7 +44,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	protected JTextArea textArea, userArea;
 	protected JFrame frame;
 	protected JButton privateMsgButton, startButton, sendButton;
-	protected JPanel clientPanel, userPanel, channelPanel;
+	protected JPanel clientPanel, userPanel, chatTextPanel;
+	protected JTabbedPane channelPanel;
 
 	public ChatClientGUI() {
 
@@ -70,12 +72,16 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		Container container = getContentPane();
 		JPanel outerPanel = new JPanel(new BorderLayout());
+		
+		chatTextPanel = getTextPanel();
 
 		outerPanel.add(getInputPanel(), BorderLayout.CENTER);
-		outerPanel.add(getTextPanel(), BorderLayout.NORTH);
+		outerPanel.add(chatTextPanel, BorderLayout.NORTH);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
-		leftPanel.add(getChannelPanel(), BorderLayout.NORTH);
+		channelPanel = getChannelPanel();
+		
+		leftPanel.add(channelPanel, BorderLayout.NORTH);
 		leftPanel.add(getUsersPanel(), BorderLayout.SOUTH);
 
 		container.setLayout(new BorderLayout());
@@ -158,9 +164,9 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * 
 	 * @return JPanel channel list panel
 	 */
-	public JPanel getChannelPanel() {
+	public JTabbedPane getChannelPanel() {
 
-		channelPanel = new JPanel(new BorderLayout());
+		channelPanel = new JTabbedPane();
 		String pannelTitle = "TEXT CHANNELS";
 
 		JLabel channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
@@ -208,7 +214,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * @param channelTitles
 	 */
 	public void setChannelPanel(String[] channelTitles) {
-		channelPanel = new JPanel(new BorderLayout());
 		DefaultListModel<String> channelListModel = new DefaultListModel<String>();
 		channelListModel.addAll(Arrays.asList(channelTitles));
 
