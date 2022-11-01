@@ -1,12 +1,19 @@
 package src;
 
+import java.awt.Color;
+import java.util.logging.Logger;
+
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public class MainClient {
 
+	private static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
+
+	private static final Logger log = Logger.getLogger(MainClient.class.getName());
+
 	public static void main(String[] args) {
-		setLookAndFeelInfo("Nimbus");
+		setLookAndFeelInfo(NIMBUS_LOOK_AND_FEEL);
 		new ChatClientGUI();
 	}
 
@@ -19,8 +26,7 @@ public class MainClient {
 				}
 			}
 		} catch (Exception e) {
-			e.getStackTrace();
+			log.severe(e.getMessage());
 		}
 	}
-
 }

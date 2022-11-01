@@ -1,11 +1,17 @@
 package src;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -38,7 +44,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
 	private static final Border BLANK_BORDER = BorderFactory.createEmptyBorder(10, 10, 20, 10);// top,r,b,l
 
+	private static final String APP_TITLE = "Discord Lite ™";
+
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
+	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
 
@@ -61,7 +70,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/* This method should be provided by server */
 	public String[] getChannels() {
-		String[] channels = { "general", "off-topic", "middleware" };
+		String[] channels = { "#general", "#off-topic", "#middleware" };
 		return channels;
 	}
 
@@ -92,7 +101,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		initChannelContents(channelTitles);
 		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
-		frame = new JFrame("Client Chat Console");
+		frame = new JFrame(APP_TITLE);
 
 		/*
 		 * intercept close method, inform server we are leaving
@@ -103,10 +112,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 				if (chatClient != null) {
 					try {
-						sendMessage("Bye all, I am leaving");
+						sendMessage(LOGOUT_MESSAGE);
 						chatClient.serverIF.leaveChat(name);
 					} catch (RemoteException e) {
-						e.printStackTrace();
+						log.severe(e.getMessage());
 					}
 				}
 				System.exit(0);
@@ -316,7 +325,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			if (e.getSource() == startButton) {
 				name = textField.getText();
 				if (name.length() != 0) {
-					frame.setTitle(name + "'s console ");
 					textField.setText("");
 					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
 					getConnected(name);
@@ -350,7 +358,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			}
 
 		} catch (RemoteException remoteExc) {
-			remoteExc.printStackTrace();
+			log.severe(remoteExc.getMessage());
 		}
 
 	}
