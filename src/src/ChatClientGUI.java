@@ -5,10 +5,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -157,6 +154,23 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		inputPanel = new JPanel(new GridLayout(1, 1, 5, 5));
 		inputPanel.setBorder(BLANK_BORDER);
 		textField = new JTextField();
+		textField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled()) {
+					try {
+						message = textField.getText();
+						textField.setText("");
+						sendMessage(message);
+						System.out.println("Sending message : " + message);
+
+					} catch (RemoteException error) {
+						log.severe(error.getMessage());
+					}
+				}
+			}
+		});
+
 		textField.setFont(MEIRYO_FONT_14);
 		inputPanel.add(textField);
 		return inputPanel;

@@ -25,3 +25,7 @@ hs_err_pid*
 .classpath
 .project
 bin/
+.idea/
+chat_client.iml
+
+
