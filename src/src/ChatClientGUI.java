@@ -1,10 +1,6 @@
 package src;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.*;
 import java.rmi.RemoteException;
 import java.util.Arrays;
@@ -42,7 +38,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
 
-	private JTextField textField;
+	private JTextArea textField;
 	private String name, message;
 	private ChatClient chatClient;
 	private JList<String> userList, channelList;
@@ -153,15 +149,23 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	public JPanel getInputPanel() {
 		inputPanel = new JPanel(new GridLayout(1, 1, 5, 5));
 		inputPanel.setBorder(BLANK_BORDER);
-		textField = new JTextField();
+		textField = new JTextArea();
+		textField.setPreferredSize(new Dimension(250,40));
+		System.out.println(textField.getAlignmentX());
+		System.out.println(textField.getAlignmentY());
+		System.out.println(textField.getCursor());
+
+
+
 		textField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled()) {
+				String input = textField.getText().trim();
+				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled() && input != "") {
 					try {
 						message = textField.getText();
 						textField.setText("");
-						sendMessage(message);
+						sendMessage(input);
 						System.out.println("Sending message : " + message);
 
 					} catch (RemoteException error) {
@@ -314,7 +318,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		try {
 			// get connected to chat service
 			if (e.getSource() == startButton) {
-				name = textField.getText();
+				name = textField.getText().trim();
 				if (name.length() != 0) {
 					frame.setTitle(name + "'s console ");
 					textField.setText("");
@@ -330,8 +334,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			}
 
 			// get text and clear textField
-			if (e.getSource() == sendButton) {
-				message = textField.getText();
+			message = textField.getText().trim();
+			if (e.getSource() == sendButton && message.length() != 0) {
 				textField.setText("");
 				sendMessage(message);
 				System.out.println("Sending message : " + message);
