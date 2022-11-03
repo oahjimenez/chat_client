@@ -61,18 +61,13 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	protected JFrame frame;
 	protected JButton privateMsgButton, startButton, sendButton;
 	protected JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel;
+	protected JLabel channelLabel;
 
 	protected Map<Channel, JTextArea> channelChatContents = new LinkedHashMap<>();
 	protected Channel selectedChannel;
 	protected JTextArea conversationTextArea;
 
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
-
-	/* This method should be provided by server */
-	public String[] getChannels() {
-		String[] channels = { "#general", "#off-topic", "#middleware" };
-		return channels;
-	}
 
 	public JTextArea getCurrentTextArea() {
 		return channelChatContents.get(selectedChannel);
@@ -90,6 +85,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	protected void initChannelContents(String... channelTitles) {
+		this.channelChatContents.clear();
 		for (String channelTitle : channelTitles) {
 			String textAreaMessage = String.join(SINGLE_SPACE, WELCOME_MESSAGE, channelTitle, NEW_LINE);
 			this.channelChatContents.put(Channel.fromTitle(channelTitle), createTextArea(textAreaMessage));
@@ -97,7 +93,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	public ChatClientGUI() {
-		String[] channelTitles = getChannels(); // provided by server
+		String[] channelTitles ={""}; // you loaded the channel after login, not before
 		initChannelContents(channelTitles);
 		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
@@ -113,7 +109,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				if (chatClient != null) {
 					try {
 						sendMessage(LOGOUT_MESSAGE);
-						chatClient.serverIF.leaveChat(name);
+						chatClient.serverIF.leaveChat(name,selectedChannel.getTitle());
 					} catch (RemoteException e) {
 						log.severe(e.getMessage());
 					}
@@ -220,7 +216,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		channelPanel = new JPanel(new BorderLayout());
 		String pannelTitle = "Channels";
 
-		JLabel channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
+   		channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
 		channelPanel.add(channelLabel, BorderLayout.NORTH);
 		channelLabel.setFont(MEIRYO_FONT_16);
 
@@ -232,18 +228,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		channelList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		channelList.setVisibleRowCount(8);
 		channelList.setFont(MEIRYO_FONT_14);
-		channelList.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent event) {
-				if (!event.getValueIsAdjusting()) {
-					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
-					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
-					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
-
-					System.out.println("Selected channel + " + selectedChannel);
-				}
-			}
-		});
 		channelList.setSelectedIndex(0); // first channel general by default
 		channelPanel.add(new JScrollPane(channelList), BorderLayout.CENTER);
 
@@ -331,6 +315,12 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					if (!chatClient.connectionProblem) {
 						startButton.setEnabled(false);
 						sendButton.setEnabled(true);
+
+						try {
+							loadChannelAfterLogin();
+						} catch (RemoteException e1) {
+							e1.printStackTrace();
+						}	
 					}
 				} else {
 					JOptionPane.showMessageDialog(frame, "Enter your name to Start");
@@ -367,7 +357,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * Send a message, to be relayed to all chatters
 	 */
 	private void sendMessage(String chatMessage) throws RemoteException {
-		chatClient.serverIF.updateChat(name, chatMessage);
+		chatClient.serverIF.updateChat(name, chatMessage,selectedChannel.getTitle());
 	}
 
 	/**
@@ -390,5 +380,52 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		} catch (RemoteException e) {
 			log.severe(e.getMessage());
 		}
+	}
+	
+	private void loadChannelAfterLogin() throws RemoteException {
+		String[] channelTitles = chatClient.serverIF.getChannelsName().toArray(new String[0]);; // provided by server
+		initChannelContents(channelTitles);
+		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
+
+        conversationTextArea.setText(String.join(SINGLE_SPACE, WELCOME_MESSAGE, selectedChannel.getTitle(), NEW_LINE));
+
+        
+        DefaultListModel<String> channelListModel = new DefaultListModel<String>();
+		channelListModel.addAll(Arrays.asList(channelTitles));
+
+		// Create the list and put it in a scroll pane.
+		channelList = new JList<String>(channelListModel);
+		channelList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		channelList.setVisibleRowCount(8);
+		channelList.setFont(MEIRYO_FONT_14);
+		channelList.setSelectedIndex(0); // first channel general by default
+
+        channelPanel.removeAll();
+		channelPanel.add(channelLabel, BorderLayout.NORTH);
+		channelPanel.add(new JScrollPane(channelList), BorderLayout.CENTER);
+		channelPanel.setFont(MEIRYO_FONT_14);
+		channelPanel.setBorder(BLANK_BORDER);
+
+        channelList.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent event) {
+				if (!event.getValueIsAdjusting()) {
+					String oldChannel = selectedChannel.getTitle(); 
+					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
+					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
+					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+
+					try {
+						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle(), oldChannel);
+						System.out.println("After Login Selected channel + " + selectedChannel);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+										
+				}
+			}
+		});
+		channelList.setSelectedIndex(0); // first channel general by default
 	}
 }
