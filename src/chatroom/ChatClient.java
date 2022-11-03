@@ -1,4 +1,4 @@
-package src;
+package chatroom;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -95,9 +95,6 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 		if (currentUsers.length < 2) {
 			chatGUI.privateMsgButton.setEnabled(false);
 		}
-		chatGUI.userPanel.remove(chatGUI.clientPanel);
-		chatGUI.setClientPanel(currentUsers);
-		chatGUI.clientPanel.repaint();
-		chatGUI.clientPanel.revalidate();
+		chatGUI.updateClientPanel(currentUsers);
 	}
 }
