@@ -1,6 +1,5 @@
-package src;
+package chatroom;
 
-import java.awt.Color;
 import java.util.logging.Logger;
 
 import javax.swing.UIManager;
