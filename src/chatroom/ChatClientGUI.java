@@ -49,6 +49,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
 	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
+	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
 
@@ -96,7 +97,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	public ChatClientGUI() {
-		String[] channelTitles = { "Login to get started" };
+		String[] channelTitles = { CHANNEL_BEFORE_LOGIN_MESSAGE };
 		initChannelContents(Arrays.asList(channelTitles));
 		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
@@ -109,7 +110,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			@Override
 			public void windowClosing(WindowEvent windowEvent) {
 
-				if (chatClient != null) {
+				if (chatClient != null && chatClient.serverIF != null) {
 					try {
 						sendMessage(LOGOUT_MESSAGE);
 						chatClient.serverIF.leaveChat(name, selectedChannel.getTitle());
