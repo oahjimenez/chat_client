@@ -44,6 +44,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Font MEIRYO_FONT_14 = new Font("Meiryo", Font.PLAIN, 14);
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
 	private static final Border BLANK_BORDER = BorderFactory.createEmptyBorder(10, 10, 20, 10);// top,r,b,l
+	private static final int CHAT_WIDTH = 60;
 
 	private static final String APP_TITLE = "Discord Lite ™";
 
@@ -78,7 +79,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	protected JTextArea createTextArea(String text) {
-		JTextArea textArea = new JTextArea(text, 14, 34);
+		JTextArea textArea = new JTextArea(text, 14, CHAT_WIDTH);
 		textArea.setMargin(new Insets(1, 1, 1, 1));
 		textArea.setFont(MEIRYO_FONT_14);
 
