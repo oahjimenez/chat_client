@@ -1,6 +1,7 @@
 package chatroom;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -22,7 +23,6 @@ import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -33,6 +33,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -42,7 +43,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 	private static final Font MEIRYO_FONT_14 = new Font("Meiryo", Font.PLAIN, 14);
-	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
+	private static final Font MEIRYO_FONT_16_BOLD = new Font("Meiryo", Font.BOLD, 16);
 	private static final Border BLANK_BORDER = BorderFactory.createEmptyBorder(10, 10, 20, 10);// top,r,b,l
 
 	private static final String APP_TITLE = "Discord Lite ™";
@@ -52,6 +53,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
+
+	private static final int CHAT_WIDTH = 60;
 
 	private JTextField textField;
 	private String name, message;
@@ -78,7 +81,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	protected JTextArea createTextArea(String text) {
-		JTextArea textArea = new JTextArea(text, 14, 34);
+		JTextArea textArea = new JTextArea(text, 14, CHAT_WIDTH);
 		textArea.setMargin(new Insets(1, 1, 1, 1));
 		textArea.setFont(MEIRYO_FONT_14);
 
@@ -123,6 +126,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		});
 
 		container = getContentPane();
+		JPanel containerPanel = new GradientPanel(new BorderLayout());
 		JPanel outerPanel = new JPanel(new BorderLayout());
 
 		conversationTextArea = createTextArea(
@@ -131,7 +135,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		textPanel.add(new JScrollPane(conversationTextArea));
 		textPanel.setFont(MEIRYO_FONT_14);
 
-		outerPanel.add(getInputPanel(), BorderLayout.CENTER);
+		JPanel inputPanel = getInputPanel();
+		outerPanel.add(inputPanel, BorderLayout.CENTER);
 		outerPanel.add(textPanel, BorderLayout.NORTH);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
@@ -142,8 +147,19 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		leftPanel.add(userPanel, BorderLayout.SOUTH);
 
 		container.setLayout(new BorderLayout());
-		container.add(outerPanel, BorderLayout.CENTER);
-		container.add(leftPanel, BorderLayout.WEST);
+
+		inputPanel.setOpaque(false);
+		textPanel.setOpaque(false);
+		outerPanel.setOpaque(false);
+		leftPanel.setOpaque(false);
+		channelPanel.setOpaque(false);
+		userPanel.setOpaque(false);
+
+		containerPanel.add(outerPanel, BorderLayout.CENTER);
+		containerPanel.add(leftPanel, BorderLayout.WEST);
+		containerPanel.setBorder(new EmptyBorder(20, 10, 15, 20)); // outer padding
+
+		container.add(containerPanel, BorderLayout.CENTER);
 
 		frame.add(container);
 		frame.pack();
@@ -161,7 +177,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * @return inputPanel
 	 */
 	public JPanel getInputPanel() {
-		inputPanel = new JPanel(new GridLayout(1, 1, 5, 5));
+		inputPanel = new JPanel(new BorderLayout());
 		inputPanel.setBorder(BLANK_BORDER);
 		textField = new JTextField();
 		textField.addKeyListener(new KeyAdapter() {
@@ -195,11 +211,12 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	public JPanel getUsersPanel() {
 
 		userPanel = new JPanel(new BorderLayout());
-		String userStr = " Current Users      ";
+		String userStr = "Current Users";
 
 		JLabel userLabel = new JLabel(userStr, JLabel.CENTER);
 		userPanel.add(userLabel, BorderLayout.NORTH);
-		userLabel.setFont(MEIRYO_FONT_16);
+		userLabel.setFont(MEIRYO_FONT_16_BOLD);
+		userLabel.setForeground(Color.WHITE);
 
 		String[] noClientsYet = { "No other users" };
 		setClientPanel(noClientsYet);
@@ -223,7 +240,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
 		channelPanel.add(channelLabel, BorderLayout.NORTH);
-		channelLabel.setFont(MEIRYO_FONT_16);
+		channelLabel.setFont(MEIRYO_FONT_16_BOLD);
+		channelLabel.setForeground(Color.WHITE);
 
 		channelListModel = new DefaultListModel<String>();
 		channelListModel.addAll(Arrays.asList(channels));
@@ -242,11 +260,11 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		return channelPanel;
 	}
 
-	protected JComponent makeTextPanel(String text) {
-		JPanel panel = new JPanel(false);
+	protected JPanel makeTextPanel(String text) {
+		JPanel panel = new JPanel(new BorderLayout());
 		JLabel filler = new JLabel(text);
 		filler.setHorizontalAlignment(JLabel.CENTER);
-		panel.setLayout(new GridLayout(1, 1));
+		// panel.setLayout(new GridLayout(1, 1));
 		panel.add(filler);
 		return panel;
 	}
@@ -420,7 +438,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				}
 			}
 		});
-		
+
 		channelList.setSelectedIndex(0); // select first channel by default
 		channelPanel.revalidate();
 		channelPanel.repaint();
