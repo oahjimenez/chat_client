@@ -43,7 +43,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private static final Font MEIRYO_FONT_14 = new Font("Meiryo", Font.PLAIN, 14);
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
-	private static final Border BLANK_BORDER = BorderFactory.createEmptyBorder(10, 10, 20, 10);// top,r,b,l
+	private static final Border RIGHT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 10, 20, 20);// top,r,b,l
+	private static final Border LEFT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 20, 20, 10);// top,r,b,l
 	private static final int CHAT_WIDTH = 60;
 
 	private static final String APP_TITLE = "Discord Lite ™";
@@ -131,6 +132,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		textPanel = new JPanel(new BorderLayout());
 		textPanel.add(new JScrollPane(conversationTextArea));
 		textPanel.setFont(MEIRYO_FONT_14);
+		textPanel.setBorder(RIGHT_BLANK_BORDER);
 
 		outerPanel.add(getInputPanel(), BorderLayout.CENTER);
 		outerPanel.add(textPanel, BorderLayout.NORTH);
@@ -163,7 +165,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 */
 	public JPanel getInputPanel() {
 		inputPanel = new JPanel(new GridLayout(1, 1, 5, 5));
-		inputPanel.setBorder(BLANK_BORDER);
+		inputPanel.setBorder(RIGHT_BLANK_BORDER);
 		textField = new JTextField();
 		textField.addKeyListener(new KeyAdapter() {
 			@Override
@@ -207,7 +209,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		clientPanel.setFont(MEIRYO_FONT_14);
 		userPanel.add(makeButtonPanel(), BorderLayout.SOUTH);
-		userPanel.setBorder(BLANK_BORDER);
+		userPanel.setBorder(LEFT_BLANK_BORDER);
 
 		return userPanel;
 	}
@@ -238,7 +240,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		channelPanel.add(new JScrollPane(channelList), BorderLayout.CENTER);
 
 		channelPanel.setFont(MEIRYO_FONT_14);
-		channelPanel.setBorder(BLANK_BORDER);
+		channelPanel.setBorder(LEFT_BLANK_BORDER);
 
 		return channelPanel;
 	}
