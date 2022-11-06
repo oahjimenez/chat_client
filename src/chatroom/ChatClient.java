@@ -71,8 +71,12 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 		try {
 			serverIF.passIDentity(this.ref);
 			serverIF.registerListener(details);
-		} catch (Exception e) {
+		} catch (RemoteException e) {
 			log.severe(e.getMessage());
+		} catch (Exception e) {
+			connectionProblem=true;
+			JOptionPane.showMessageDialog(chatGUI.frame, e.getMessage(), CONNECTION_PROBLEM_MESSAGE,
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
