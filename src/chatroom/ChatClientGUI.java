@@ -74,6 +74,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	protected Container container;
 
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
+	
+	protected boolean hasInfiniChannelBeenAccessedOnce = false;
 
 	public JTextArea getCurrentTextArea() {
 		return channelChatContents.get(selectedChannel);
@@ -414,6 +416,19 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 					try {
 						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle(), oldChannel);
+						if (selectedChannel.getTitle().equals("#infini") 
+							) {
+							if (!hasInfiniChannelBeenAccessedOnce) {
+								int val = chatClient.serverIF.getLastInfiniValue();
+								if (val!=0) {
+									String msg = "[Server] : " +val + "\n";
+									getCurrentTextArea().append(msg);
+									conversationTextArea.append(msg);
+									conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+									hasInfiniChannelBeenAccessedOnce=true;	
+								}
+							}
+						}
 						System.out.println("After Login Selected channel + " + selectedChannel);
 					} catch (RemoteException e) {
 						// TODO Auto-generated catch block

@@ -86,7 +86,17 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 		chatGUI.conversationTextArea.append(message);
 		chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
 	}
-
+	
+	/**
+	 * Receive a exception from the chat server
+	 */
+	@Override
+	public void exceptionFromServer(String message) throws RemoteException {
+		log.warning(message);
+		chatGUI.conversationTextArea.append("Exception:["+message+"]\n");
+		chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+	}
+	
 	/**
 	 * A method to update the display of users currently connected to the server
 	 */
