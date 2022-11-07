@@ -84,11 +84,19 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	 * Receive a string from the chat server
 	 */
 	@Override
-	public void messageFromServer(String message) throws RemoteException {
+	public void messageFromServerToChannel(String message, String channel) throws RemoteException {
 		log.info(message);
-		chatGUI.getCurrentTextArea().append(message);
-		chatGUI.conversationTextArea.append(message);
-		chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+		if (channel.equals("#pm")) {
+			chatGUI.getCurrentTextArea().append(message);
+			chatGUI.conversationTextArea.append(message);
+			chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+		} else {
+			chatGUI.appendTextToChatTextAreaForChannel(message,channel);
+			if (chatGUI.selectedChannel.getTitle().equals(channel)) {
+				chatGUI.conversationTextArea.append(message);
+				chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+			}
+		}
 	}
 	
 	/**

@@ -80,6 +80,13 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	public JTextArea getCurrentTextArea() {
 		return channelChatContents.get(selectedChannel);
 	}
+	public void appendTextToChatTextAreaForChannel(String msg, String channelName) {
+		for (Map.Entry<Channel, JTextArea> set :channelChatContents.entrySet()) {
+			if (set.getKey().getTitle().equals(channelName)) {
+				set.getValue().append(msg);;
+			}
+	    }
+	}
 
 	protected JTextArea createTextArea(String text) {
 		JTextArea textArea = new JTextArea(text, 14, CHAT_WIDTH);
@@ -117,7 +124,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				if (chatClient != null && chatClient.serverIF != null) {
 					try {
 						sendMessage(LOGOUT_MESSAGE);
-						chatClient.serverIF.leaveChat(name, selectedChannel.getTitle());
+						chatClient.serverIF.leaveChat(name);
 					} catch (RemoteException e) {
 						log.severe(e.getMessage());
 					}
@@ -409,13 +416,12 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			@Override
 			public void valueChanged(ListSelectionEvent event) {
 				if (!event.getValueIsAdjusting()) {
-					String oldChannel = selectedChannel.getTitle();
 					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
 					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
 					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
 
 					try {
-						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle(), oldChannel);
+						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
 						if (selectedChannel.getTitle().equals("#infini") 
 							) {
 							if (!hasInfiniChannelBeenAccessedOnce) {
