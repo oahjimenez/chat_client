@@ -143,7 +143,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/**
 	 * Method to build the panel with input field
-	 * 
+	 *
 	 * @return inputPanel
 	 */
 	public JPanel getInputPanel() {
@@ -183,7 +183,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	/**
 	 * Method to build the panel displaying currently connected users with a call to
 	 * the button panel building method
-	 * 
+	 *
 	 * @return
 	 */
 	public JPanel getUsersPanel() {
@@ -207,7 +207,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/**
 	 * Builds channel list panel
-	 * 
+	 *
 	 * @return JPanel channel list panel
 	 */
 	public JPanel getChannelPanel(String... channels) {
@@ -260,7 +260,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	/**
 	 * Populate current user panel with a selectable list of currently connected
 	 * users
-	 * 
+	 *
 	 * @param currClients
 	 */
 	public void setClientPanel(String[] currClients) {
@@ -285,7 +285,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/**
 	 * Make the buttons and add the listener
-	 * 
+	 *
 	 * @return
 	 */
 	public JPanel makeButtonPanel() {
