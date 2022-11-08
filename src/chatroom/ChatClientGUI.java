@@ -46,6 +46,9 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Border LEFT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 20, 20, 10);// top,r,b,l
 	private static final int CHAT_WIDTH = 60;
 
+	private static final String APP_TITLE = "Discord Lite ™";
+
+
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
 	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
 	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
@@ -108,7 +111,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		initChannelContents(Arrays.asList(channelTitles));
 		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
-		frame = new JFrame("Client Chat Console");
+		frame = new JFrame(APP_TITLE);
 
 		/*
 		 * intercept close method, inform server we are leaving
@@ -119,10 +122,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 				if (chatClient != null && chatClient.serverIF != null) {
 					try {
-						sendMessage("Bye all, I am leaving");
+						sendMessage(LOGOUT_MESSAGE);
 						chatClient.serverIF.leaveChat(name);
 					} catch (RemoteException e) {
-						e.printStackTrace();
+						log.severe(e.getMessage());
 					}
 				}
 				System.exit(0);
@@ -364,7 +367,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			}
 
 		} catch (RemoteException remoteExc) {
-			remoteExc.printStackTrace();
+			log.severe(remoteExc.getMessage());
 		}
 
 	}
