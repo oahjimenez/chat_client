@@ -54,6 +54,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
+	
+	private String username = null;
 
 	private JTextField textField;
 	private String name, message;
@@ -63,7 +65,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	protected JTextArea userArea;
 	protected JFrame frame;
-	protected JButton privateMsgButton, startButton, sendButton;
+	protected JButton privateMsgButton, startButton, sendButton,speakUpButton;
 	protected JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel;
 	protected JLabel channelLabel;
 
@@ -305,10 +307,16 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		startButton = new JButton("Start ");
 		startButton.addActionListener(this);
+		
+		speakUpButton = new JButton("Speak Up");
+		speakUpButton.setEnabled(false);
+		speakUpButton.addActionListener(this);
+		
 
-		JPanel buttonPanel = new JPanel(new GridLayout(4, 1));
+		JPanel buttonPanel = new JPanel(new GridLayout(5, 1));
 		buttonPanel.add(privateMsgButton);
 		buttonPanel.add(new JLabel(""));
+		buttonPanel.add(speakUpButton);
 		buttonPanel.add(startButton);
 		buttonPanel.add(sendButton);
 
@@ -326,6 +334,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			if (e.getSource() == startButton) {
 				name = textField.getText();
 				if (name.length() != 0) {
+					this.username = name;
 					textField.setText("");
 					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
 					getConnected(name);
@@ -362,6 +371,25 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				message = textField.getText();
 				textField.setText("");
 				sendPrivate(privateList);
+			}
+			
+			if (e.getSource() == speakUpButton) {
+				String speakerUsername = chatClient.serverIF.getSpeakerUsername();
+				System.out.println("username:"+username);
+				if (speakUpButton.getText().equals("Speak Up")) {
+					if (speakerUsername==null) {
+						chatClient.serverIF.speakUp(this.username);
+						textField.setEnabled(true);
+						speakUpButton.setText("Hand Over Speech");
+					} else {
+						JOptionPane.showMessageDialog(frame, "Il y a déja un utilisateur qui a pris la parole!","Speak Up Error",
+								JOptionPane.ERROR_MESSAGE);
+					}
+				} else {
+					chatClient.serverIF.stopSpeakUp();
+					textField.setEnabled(false);
+					speakUpButton.setText("Speak Up");
+				}
 			}
 
 		} catch (RemoteException remoteExc) {
@@ -416,11 +444,28 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			@Override
 			public void valueChanged(ListSelectionEvent event) {
 				if (!event.getValueIsAdjusting()) {
+					String oldChannelName = selectedChannel.getTitle();
+							
 					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
 					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
 					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+					if(selectedChannel.getTitle().equals("#speak-up")) {
+						speakUpButton.setEnabled(true);
+						textField.setEnabled(false);
+					}else {
+						if(speakUpButton.isEnabled()) speakUpButton.setEnabled(false);
+						if(!speakUpButton.getText().equals("Speak Up")) speakUpButton.setText("Speak Up");
+					}
+					
 
 					try {
+						if(oldChannelName.equals("#speak-up")) {
+							textField.setEnabled(true);
+							if (chatClient.serverIF.getSpeakerUsername().equals(username)) {
+								chatClient.serverIF.stopSpeakUp();
+							}
+						}
+						
 						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
 						if (selectedChannel.getTitle().equals("#infini") 
 							) {
