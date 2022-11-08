@@ -1,4 +1,4 @@
-package src;
+package chatroom;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -71,8 +71,12 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 		try {
 			serverIF.passIDentity(this.ref);
 			serverIF.registerListener(details);
-		} catch (Exception e) {
+		} catch (RemoteException e) {
 			log.severe(e.getMessage());
+		} catch (Exception e) {
+			connectionProblem=true;
+			JOptionPane.showMessageDialog(chatGUI.frame, e.getMessage(), CONNECTION_PROBLEM_MESSAGE,
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -80,13 +84,31 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	 * Receive a string from the chat server
 	 */
 	@Override
-	public void messageFromServer(String message) throws RemoteException {
+	public void messageFromServerToChannel(String message, String channel) throws RemoteException {
 		log.info(message);
-		chatGUI.getCurrentTextArea().append(message);
-		chatGUI.conversationTextArea.append(message);
+		if (channel.equals("#pm")) {
+			chatGUI.getCurrentTextArea().append(message);
+			chatGUI.conversationTextArea.append(message);
+			chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+		} else {
+			chatGUI.appendTextToChatTextAreaForChannel(message,channel);
+			if (chatGUI.selectedChannel.getTitle().equals(channel)) {
+				chatGUI.conversationTextArea.append(message);
+				chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+			}
+		}
+	}
+	
+	/**
+	 * Receive a exception from the chat server
+	 */
+	@Override
+	public void exceptionFromServer(String message) throws RemoteException {
+		log.warning(message);
+		chatGUI.conversationTextArea.append("Exception:["+message+"]\n");
 		chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
 	}
-
+	
 	/**
 	 * A method to update the display of users currently connected to the server
 	 */
@@ -95,9 +117,6 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 		if (currentUsers.length < 2) {
 			chatGUI.privateMsgButton.setEnabled(false);
 		}
-		chatGUI.userPanel.remove(chatGUI.clientPanel);
-		chatGUI.setClientPanel(currentUsers);
-		chatGUI.clientPanel.repaint();
-		chatGUI.clientPanel.revalidate();
+		chatGUI.updateClientPanel(currentUsers);
 	}
 }

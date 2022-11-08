@@ -1,13 +1,23 @@
-package src;
+package chatroom;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -32,9 +42,13 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private static final Font MEIRYO_FONT_14 = new Font("Meiryo", Font.PLAIN, 14);
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
-	private static final Border BLANK_BORDER = BorderFactory.createEmptyBorder(10, 10, 20, 10);// top,r,b,l
+	private static final Border RIGHT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 10, 20, 20);// top,r,b,l
+	private static final Border LEFT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 20, 20, 10);// top,r,b,l
+	private static final int CHAT_WIDTH = 60;
 
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
+	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
+	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
 
@@ -42,31 +56,36 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private String name, message;
 	private ChatClient chatClient;
 	private JList<String> userList, channelList;
-	private DefaultListModel<String> listModel;
+	private DefaultListModel<String> listModel, channelListModel;
 
 	protected JTextArea userArea;
 	protected JFrame frame;
 	protected JButton privateMsgButton, startButton, sendButton;
 	protected JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel;
+	protected JLabel channelLabel;
 
 	protected Map<Channel, JTextArea> channelChatContents = new LinkedHashMap<>();
 	protected Channel selectedChannel;
 	protected JTextArea conversationTextArea;
 
+	protected Container container;
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
-
-	/* This method should be provided by server */
-	public String[] getChannels() {
-		String[] channels = { "general", "off-topic", "middleware" };
-		return channels;
-	}
+	
+	protected boolean hasInfiniChannelBeenAccessedOnce = false;
 
 	public JTextArea getCurrentTextArea() {
 		return channelChatContents.get(selectedChannel);
 	}
+	public void appendTextToChatTextAreaForChannel(String msg, String channelName) {
+		for (Map.Entry<Channel, JTextArea> set :channelChatContents.entrySet()) {
+			if (set.getKey().getTitle().equals(channelName)) {
+				set.getValue().append(msg);;
+			}
+	    }
+	}
 
 	protected JTextArea createTextArea(String text) {
-		JTextArea textArea = new JTextArea(text, 14, 34);
+		JTextArea textArea = new JTextArea(text, 14, CHAT_WIDTH);
 		textArea.setMargin(new Insets(1, 1, 1, 1));
 		textArea.setFont(MEIRYO_FONT_14);
 
@@ -76,7 +95,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		return textArea;
 	}
 
-	protected void initChannelContents(String... channelTitles) {
+	protected void initChannelContents(Collection<String> channelTitles) {
+		this.channelChatContents.clear();
 		for (String channelTitle : channelTitles) {
 			String textAreaMessage = String.join(SINGLE_SPACE, WELCOME_MESSAGE, channelTitle, NEW_LINE);
 			this.channelChatContents.put(Channel.fromTitle(channelTitle), createTextArea(textAreaMessage));
@@ -84,8 +104,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	public ChatClientGUI() {
-		String[] channelTitles = getChannels(); // provided by server
-		initChannelContents(channelTitles);
+		String[] channelTitles = { CHANNEL_BEFORE_LOGIN_MESSAGE };
+		initChannelContents(Arrays.asList(channelTitles));
 		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
 		frame = new JFrame("Client Chat Console");
@@ -97,7 +117,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			@Override
 			public void windowClosing(WindowEvent windowEvent) {
 
-				if (chatClient != null) {
+				if (chatClient != null && chatClient.serverIF != null) {
 					try {
 						sendMessage("Bye all, I am leaving");
 						chatClient.serverIF.leaveChat(name);
@@ -109,7 +129,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			}
 		});
 
-		Container container = getContentPane();
+		container = getContentPane();
 		JPanel outerPanel = new JPanel(new BorderLayout());
 
 		conversationTextArea = createTextArea(
@@ -117,15 +137,17 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		textPanel = new JPanel(new BorderLayout());
 		textPanel.add(new JScrollPane(conversationTextArea));
 		textPanel.setFont(MEIRYO_FONT_14);
+		textPanel.setBorder(RIGHT_BLANK_BORDER);
 
 		outerPanel.add(getInputPanel(), BorderLayout.CENTER);
 		outerPanel.add(textPanel, BorderLayout.NORTH);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		channelPanel = getChannelPanel(channelTitles);
+		userPanel = getUsersPanel();
 
 		leftPanel.add(channelPanel, BorderLayout.NORTH);
-		leftPanel.add(getUsersPanel(), BorderLayout.SOUTH);
+		leftPanel.add(userPanel, BorderLayout.SOUTH);
 
 		container.setLayout(new BorderLayout());
 		container.add(outerPanel, BorderLayout.CENTER);
@@ -148,24 +170,18 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 */
 	public JPanel getInputPanel() {
 		inputPanel = new JPanel(new GridLayout(1, 1, 5, 5));
-		inputPanel.setBorder(BLANK_BORDER);
+		inputPanel.setBorder(RIGHT_BLANK_BORDER);
 		textField = new JTextArea();
-		textField.setPreferredSize(new Dimension(250,40));
-		System.out.println(textField.getAlignmentX());
-		System.out.println(textField.getAlignmentY());
-		System.out.println(textField.getCursor());
-
-
-
 		textField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				String input = textField.getText().trim();
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled() && input != "") {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled() && !input.isEmpty()) {
 					try {
-						message = textField.getText();
-						textField.setText("");
+						System.out.println("message sent is :"+input+":message sent is");
 						sendMessage(input);
+						textField.setText("");
+
 						System.out.println("Sending message : " + message);
 
 					} catch (RemoteException error) {
@@ -200,7 +216,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		clientPanel.setFont(MEIRYO_FONT_14);
 		userPanel.add(makeButtonPanel(), BorderLayout.SOUTH);
-		userPanel.setBorder(BLANK_BORDER);
+		userPanel.setBorder(LEFT_BLANK_BORDER);
 
 		return userPanel;
 	}
@@ -215,11 +231,11 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		channelPanel = new JPanel(new BorderLayout());
 		String pannelTitle = "Channels";
 
-		JLabel channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
+		channelLabel = new JLabel(pannelTitle, JLabel.CENTER);
 		channelPanel.add(channelLabel, BorderLayout.NORTH);
 		channelLabel.setFont(MEIRYO_FONT_16);
 
-		DefaultListModel<String> channelListModel = new DefaultListModel<String>();
+		channelListModel = new DefaultListModel<String>();
 		channelListModel.addAll(Arrays.asList(channels));
 
 		// Create the list and put it in a scroll pane.
@@ -227,23 +243,11 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		channelList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		channelList.setVisibleRowCount(8);
 		channelList.setFont(MEIRYO_FONT_14);
-		channelList.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent event) {
-				if (!event.getValueIsAdjusting()) {
-					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
-					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
-					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
-
-					System.out.println("Selected channel + " + selectedChannel);
-				}
-			}
-		});
 		channelList.setSelectedIndex(0); // first channel general by default
 		channelPanel.add(new JScrollPane(channelList), BorderLayout.CENTER);
 
 		channelPanel.setFont(MEIRYO_FONT_14);
-		channelPanel.setBorder(BLANK_BORDER);
+		channelPanel.setBorder(LEFT_BLANK_BORDER);
 
 		return channelPanel;
 	}
@@ -327,6 +331,12 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					if (!chatClient.connectionProblem) {
 						startButton.setEnabled(false);
 						sendButton.setEnabled(true);
+
+						try {
+							loadChannelAfterLogin();
+						} catch (RemoteException e1) {
+							e1.printStackTrace();
+						}
 					}
 				} else {
 					JOptionPane.showMessageDialog(frame, "Enter your name to Start");
@@ -363,7 +373,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * Send a message, to be relayed to all chatters
 	 */
 	private void sendMessage(String chatMessage) throws RemoteException {
-		chatClient.serverIF.updateChat(name, chatMessage);
+		chatClient.serverIF.updateChat(name, chatMessage, selectedChannel.getTitle());
 	}
 
 	/**
@@ -386,5 +396,55 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		} catch (RemoteException e) {
 			log.severe(e.getMessage());
 		}
+	}
+	public void updateClientPanel(String[] currentUsers) {
+		listModel.clear();
+		listModel.addAll(Arrays.asList(currentUsers));
+		userPanel.revalidate();
+	}
+
+	private void loadChannelAfterLogin() throws RemoteException {
+		List<String> channelTitles = chatClient.serverIF.getChannelsName();
+		initChannelContents(channelTitles);
+		selectedChannel = Channel.fromTitle(channelTitles.stream().findFirst().get()); // general channel by default
+		channelListModel.clear();
+		channelListModel.addAll(channelTitles);
+
+		channelList.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent event) {
+				if (!event.getValueIsAdjusting()) {
+					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
+					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
+					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+
+					try {
+						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
+						if (selectedChannel.getTitle().equals("#infini") 
+							) {
+							if (!hasInfiniChannelBeenAccessedOnce) {
+								int val = chatClient.serverIF.getLastInfiniValue();
+								if (val!=0) {
+									String msg = "[Server] : " +val + "\n";
+									getCurrentTextArea().append(msg);
+									conversationTextArea.append(msg);
+									conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+									hasInfiniChannelBeenAccessedOnce=true;	
+								}
+							}
+						}
+						System.out.println("After Login Selected channel + " + selectedChannel);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				}
+			}
+		});
+		
+		channelList.setSelectedIndex(0); // select first channel by default
+		channelPanel.revalidate();
+		channelPanel.repaint();
 	}
 }
