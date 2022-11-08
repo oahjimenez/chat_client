@@ -18,7 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -49,6 +48,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	private static final String APP_TITLE = "Discord Lite ™";
 
+
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
 	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
 	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
@@ -57,7 +57,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	
 	private String username = null;
 
-	private JTextField textField;
+	private JTextArea textField;
 	private String name, message;
 	private ChatClient chatClient;
 	private JList<String> userList, channelList;
@@ -74,7 +74,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	protected JTextArea conversationTextArea;
 
 	protected Container container;
-
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
 	
 	protected boolean hasInfiniChannelBeenAccessedOnce = false;
@@ -171,21 +170,23 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/**
 	 * Method to build the panel with input field
-	 * 
+	 *
 	 * @return inputPanel
 	 */
 	public JPanel getInputPanel() {
 		inputPanel = new JPanel(new GridLayout(1, 1, 5, 5));
 		inputPanel.setBorder(RIGHT_BLANK_BORDER);
-		textField = new JTextField();
+		textField = new JTextArea();
 		textField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled()) {
+				String input = textField.getText().trim();
+				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled() && !input.isEmpty()) {
 					try {
-						message = textField.getText();
+						System.out.println("message sent is :"+input+":message sent is");
+						sendMessage(input);
 						textField.setText("");
-						sendMessage(message);
+
 						System.out.println("Sending message : " + message);
 
 					} catch (RemoteException error) {
@@ -203,7 +204,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	/**
 	 * Method to build the panel displaying currently connected users with a call to
 	 * the button panel building method
-	 * 
+	 *
 	 * @return
 	 */
 	public JPanel getUsersPanel() {
@@ -227,7 +228,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/**
 	 * Builds channel list panel
-	 * 
+	 *
 	 * @return JPanel channel list panel
 	 */
 	public JPanel getChannelPanel(String... channels) {
@@ -268,7 +269,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	/**
 	 * Populate current user panel with a selectable list of currently connected
 	 * users
-	 * 
+	 *
 	 * @param currClients
 	 */
 	public void setClientPanel(String[] currClients) {
@@ -293,7 +294,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	/**
 	 * Make the buttons and add the listener
-	 * 
+	 *
 	 * @return
 	 */
 	public JPanel makeButtonPanel() {
@@ -332,9 +333,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		try {
 			// get connected to chat service
 			if (e.getSource() == startButton) {
-				name = textField.getText();
+				name = textField.getText().trim();
 				if (name.length() != 0) {
 					this.username = name;
+					frame.setTitle(name + "'s console ");
 					textField.setText("");
 					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
 					getConnected(name);
@@ -354,8 +356,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			}
 
 			// get text and clear textField
-			if (e.getSource() == sendButton) {
-				message = textField.getText();
+			message = textField.getText().trim();
+			if (e.getSource() == sendButton && message.length() != 0) {
 				textField.setText("");
 				sendMessage(message);
 				System.out.println("Sending message : " + message);
@@ -426,7 +428,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			log.severe(e.getMessage());
 		}
 	}
-
 	public void updateClientPanel(String[] currentUsers) {
 		listModel.clear();
 		listModel.addAll(Arrays.asList(currentUsers));
