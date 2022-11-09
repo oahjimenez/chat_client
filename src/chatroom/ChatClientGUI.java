@@ -1,6 +1,8 @@
 package chatroom;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -18,7 +20,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -29,7 +33,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
@@ -48,13 +51,12 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	private static final String APP_TITLE = "Discord Lite ™";
 
-
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
 	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
 	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
-	
+
 	private String username = null;
 
 	protected JTextArea textField;
@@ -65,7 +67,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	protected JTextArea userArea;
 	protected JFrame frame;
-	protected JButton privateMsgButton, startButton, sendButton,speakUpButton;
+	protected JButton privateMsgButton, startButton, sendButton, speakUpButton;
 	protected JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel;
 	protected JLabel channelLabel;
 
@@ -75,18 +77,20 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	protected Container container;
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
-	
+
 	protected boolean hasInfiniChannelBeenAccessedOnce = false;
 
 	public JTextArea getCurrentTextArea() {
 		return channelChatContents.get(selectedChannel);
 	}
+
 	public void appendTextToChatTextAreaForChannel(String msg, String channelName) {
-		for (Map.Entry<Channel, JTextArea> set :channelChatContents.entrySet()) {
+		for (Map.Entry<Channel, JTextArea> set : channelChatContents.entrySet()) {
 			if (set.getKey().getTitle().equals(channelName)) {
-				set.getValue().append(msg);;
+				set.getValue().append(msg);
+				;
 			}
-	    }
+		}
 	}
 
 	protected JTextArea createTextArea(String text) {
@@ -183,7 +187,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				String input = textField.getText().trim();
 				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled() && !input.isEmpty()) {
 					try {
-						System.out.println("message sent is :"+input+":message sent is");
+						System.out.println("message sent is :" + input + ":message sent is");
 						sendMessage(input);
 						textField.setText("");
 
@@ -287,6 +291,21 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		userList.setVisibleRowCount(8);
 		userList.setFont(MEIRYO_FONT_14);
 		JScrollPane listScrollPane = new JScrollPane(userList);
+		//Highlight current user
+		userList.setCellRenderer(new DefaultListCellRenderer() {
+			private static final long serialVersionUID = 5773379957985135856L;
+
+			@Override
+			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
+				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				String cellUsername = (String) value;
+				if (cellUsername.equals(username)) {
+					setBackground(Color.LIGHT_GRAY);
+				}
+				return this;
+			}
+		});
 
 		clientPanel.add(listScrollPane, BorderLayout.CENTER);
 		userPanel.add(clientPanel, BorderLayout.CENTER);
@@ -308,11 +327,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		startButton = new JButton("Start ");
 		startButton.addActionListener(this);
-		
+
 		speakUpButton = new JButton("Speak Up");
 		speakUpButton.setEnabled(false);
 		speakUpButton.addActionListener(this);
-		
 
 		JPanel buttonPanel = new JPanel(new GridLayout(5, 1));
 		buttonPanel.add(privateMsgButton);
@@ -374,18 +392,18 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				textField.setText("");
 				sendPrivate(privateList);
 			}
-			
+
 			if (e.getSource() == speakUpButton) {
 				String speakerUsername = chatClient.serverIF.getSpeakerUsername();
-				System.out.println("username:"+username);
+				System.out.println("username:" + username);
 				if (speakUpButton.getText().equals("Speak Up")) {
-					if (speakerUsername==null) {
+					if (speakerUsername == null) {
 						chatClient.serverIF.speakUp(this.username);
 						textField.setEnabled(true);
 						speakUpButton.setText("Hand Over Speech");
 					} else {
-						JOptionPane.showMessageDialog(frame, "Il y a déja un utilisateur qui a pris la parole!","Speak Up Error",
-								JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(frame, "Il y a déja un utilisateur qui a pris la parole!",
+								"Speak Up Error", JOptionPane.ERROR_MESSAGE);
 					}
 				} else {
 					chatClient.serverIF.stopSpeakUp();
@@ -428,6 +446,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			log.severe(e.getMessage());
 		}
 	}
+
 	public void updateClientPanel(String[] currentUsers) {
 		listModel.clear();
 		listModel.addAll(Arrays.asList(currentUsers));
@@ -446,40 +465,41 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			public void valueChanged(ListSelectionEvent event) {
 				if (!event.getValueIsAdjusting()) {
 					String oldChannelName = selectedChannel.getTitle();
-							
+
 					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
 					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
 					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
-					
+
 					if (sendButton.isEnabled()) {
-						if(selectedChannel.getTitle().equals("#speak-up")) {
+						if (selectedChannel.getTitle().equals("#speak-up")) {
 							speakUpButton.setEnabled(true);
 							textField.setEnabled(false);
-						}else {
-							if(speakUpButton.isEnabled()) speakUpButton.setEnabled(false);
-							if(!speakUpButton.getText().equals("Speak Up")) speakUpButton.setText("Speak Up");
+						} else {
+							if (speakUpButton.isEnabled())
+								speakUpButton.setEnabled(false);
+							if (!speakUpButton.getText().equals("Speak Up"))
+								speakUpButton.setText("Speak Up");
 						}
 
-						
 						try {
-							if(oldChannelName.equals("#speak-up")) {
+							if (oldChannelName.equals("#speak-up")) {
 								textField.setEnabled(true);
 								if (chatClient.serverIF.getSpeakerUsername().equals(username)) {
 									chatClient.serverIF.stopSpeakUp();
 								}
 							}
-							
+
 							chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
-							if (selectedChannel.getTitle().equals("#infini") 
-								) {
+							if (selectedChannel.getTitle().equals("#infini")) {
 								if (!hasInfiniChannelBeenAccessedOnce) {
 									int val = chatClient.serverIF.getLastInfiniValue();
-									if (val!=0) {
-										String msg = "[Server] : " +val + "\n";
+									if (val != 0) {
+										String msg = "[Server] : " + val + "\n";
 										getCurrentTextArea().append(msg);
 										conversationTextArea.append(msg);
-										conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
-										hasInfiniChannelBeenAccessedOnce=true;	
+										conversationTextArea
+												.setCaretPosition(conversationTextArea.getDocument().getLength());
+										hasInfiniChannelBeenAccessedOnce = true;
 									}
 								}
 							}
@@ -492,7 +512,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				}
 			}
 		});
-		
+
 		channelList.setSelectedIndex(0); // select first channel by default
 		channelPanel.revalidate();
 		channelPanel.repaint();
