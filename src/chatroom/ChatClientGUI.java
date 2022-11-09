@@ -57,7 +57,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	
 	private String username = null;
 
-	private JTextArea textField;
+	protected JTextArea textField;
 	private String name, message;
 	private ChatClient chatClient;
 	private JList<String> userList, channelList;
@@ -450,43 +450,45 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					selectedChannel = Channel.fromTitle(channelList.getSelectedValue());
 					conversationTextArea.setText(channelChatContents.get(selectedChannel).getText());
 					conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
-					if(selectedChannel.getTitle().equals("#speak-up")) {
-						speakUpButton.setEnabled(true);
-						textField.setEnabled(false);
-					}else {
-						if(speakUpButton.isEnabled()) speakUpButton.setEnabled(false);
-						if(!speakUpButton.getText().equals("Speak Up")) speakUpButton.setText("Speak Up");
-					}
 					
-
-					try {
-						if(oldChannelName.equals("#speak-up")) {
-							textField.setEnabled(true);
-							if (chatClient.serverIF.getSpeakerUsername().equals(username)) {
-								chatClient.serverIF.stopSpeakUp();
-							}
+					if (sendButton.isEnabled()) {
+						if(selectedChannel.getTitle().equals("#speak-up")) {
+							speakUpButton.setEnabled(true);
+							textField.setEnabled(false);
+						}else {
+							if(speakUpButton.isEnabled()) speakUpButton.setEnabled(false);
+							if(!speakUpButton.getText().equals("Speak Up")) speakUpButton.setText("Speak Up");
 						}
+
 						
-						chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
-						if (selectedChannel.getTitle().equals("#infini") 
-							) {
-							if (!hasInfiniChannelBeenAccessedOnce) {
-								int val = chatClient.serverIF.getLastInfiniValue();
-								if (val!=0) {
-									String msg = "[Server] : " +val + "\n";
-									getCurrentTextArea().append(msg);
-									conversationTextArea.append(msg);
-									conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
-									hasInfiniChannelBeenAccessedOnce=true;	
+						try {
+							if(oldChannelName.equals("#speak-up")) {
+								textField.setEnabled(true);
+								if (chatClient.serverIF.getSpeakerUsername().equals(username)) {
+									chatClient.serverIF.stopSpeakUp();
 								}
 							}
+							
+							chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
+							if (selectedChannel.getTitle().equals("#infini") 
+								) {
+								if (!hasInfiniChannelBeenAccessedOnce) {
+									int val = chatClient.serverIF.getLastInfiniValue();
+									if (val!=0) {
+										String msg = "[Server] : " +val + "\n";
+										getCurrentTextArea().append(msg);
+										conversationTextArea.append(msg);
+										conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+										hasInfiniChannelBeenAccessedOnce=true;	
+									}
+								}
+							}
+							System.out.println("After Login Selected channel + " + selectedChannel);
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
-						System.out.println("After Login Selected channel + " + selectedChannel);
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
 					}
-
 				}
 			}
 		});

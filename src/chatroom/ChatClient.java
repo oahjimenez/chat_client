@@ -1,5 +1,7 @@
 package chatroom;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -8,6 +10,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
+import javax.swing.Timer;
 
 public class ChatClient extends UnicastRemoteObject implements ChatClientInterface {
 
@@ -118,5 +121,28 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 			chatGUI.privateMsgButton.setEnabled(false);
 		}
 		chatGUI.updateClientPanel(currentUsers);
+	}
+	
+	@Override
+	public void serverIsClosing() throws RemoteException{
+		chatGUI.startButton.setEnabled(false);
+		chatGUI.sendButton.setEnabled(false);
+		chatGUI.privateMsgButton.setEnabled(false);
+		chatGUI.speakUpButton.setEnabled(false);
+		chatGUI.conversationTextArea.setEnabled(false);
+		chatGUI.textField.setEditable(false);
+		
+		Timer timer = new Timer(2000, new ActionListener() {
+			  @Override
+			  public void actionPerformed(ActionEvent arg0) {
+			    // Code to be executed
+				System.exit(0);
+				chatGUI.setVisible(false);
+				chatGUI.dispose();
+			  }
+			});
+		timer.setRepeats(false); // Only execute once
+		timer.start(); // Go go go!
+		
 	}
 }
