@@ -9,6 +9,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.logging.Logger;
 
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
@@ -22,6 +23,8 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	private static final String RMI_URI = String.format("rmi://%s:%s/", HOSTNAME, COM_PORT);
 	private static final String SERVER_UNAVAILABLE_MESSAGE = "The server seems to be unavailable\nPlease try later";
 	private static final String CONNECTION_PROBLEM_MESSAGE = "Connection problem";
+	
+	private static final String SERVER_EXCEPTION_TITLE = "Server Exception";
 
 	protected ChatClientGUI chatGUI;
 	private String clientServiceName, userName;
@@ -107,9 +110,7 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	 */
 	@Override
 	public void exceptionFromServer(String message) throws RemoteException {
-		log.warning(message);
-		chatGUI.conversationTextArea.append("Exception:["+message+"]\n");
-		chatGUI.conversationTextArea.setCaretPosition(chatGUI.conversationTextArea.getDocument().getLength());
+		chatGUI.displayModal(SERVER_EXCEPTION_TITLE,message);
 	}
 	
 	/**

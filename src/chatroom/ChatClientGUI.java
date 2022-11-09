@@ -26,6 +26,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -291,7 +292,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		userList.setVisibleRowCount(8);
 		userList.setFont(MEIRYO_FONT_14);
 		JScrollPane listScrollPane = new JScrollPane(userList);
-		//Highlight current user
+		// Highlight current user
 		userList.setCellRenderer(new DefaultListCellRenderer() {
 			private static final long serialVersionUID = 5773379957985135856L;
 
@@ -516,5 +517,19 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		channelList.setSelectedIndex(0); // select first channel by default
 		channelPanel.revalidate();
 		channelPanel.repaint();
+	}
+
+	public void displayModal(String title, String message) {
+		log.warning(message);
+		
+		JLabel modalLabel = new JLabel(message, JLabel.CENTER);
+		modalLabel.setFont(MEIRYO_FONT_16);
+		JDialog dialog = new JDialog(frame, title);
+		dialog.add(modalLabel);
+		dialog.setModal(false); // IMPORTANT! Now the thread isn't blocked
+		dialog.setSize(500,200);
+		dialog.setLocationRelativeTo(null); //center of screen
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setVisible(true);
 	}
 }
