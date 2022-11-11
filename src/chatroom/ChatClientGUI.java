@@ -53,8 +53,14 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final String APP_TITLE = "Discord Lite ™";
 
 	private static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";
+	private static final String INFINI_MESSAGE = "Write a number starting from number below up to infinity. Make sure it is not repeated within this chat!\n";
+	private static final String SPEAK_UP_MESSAGE = "Eager to share an important message? Take the mic and give a shout out! Nobody will interrump you until your message is sent.\n";
 	private static final String LOGOUT_MESSAGE = "Bye all, I am leaving";
 	private static final String CHANNEL_BEFORE_LOGIN_MESSAGE = "Login to get started";
+
+	private static final Map<String, String> SPECIAL_CHANNEL_MESSAGES = Map.of("#infini", INFINI_MESSAGE, "#speak-up",
+			SPEAK_UP_MESSAGE);
+
 	private static final String NEW_LINE = System.lineSeparator();
 	private static final String SINGLE_SPACE = " ";
 
@@ -108,7 +114,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	protected void initChannelContents(Collection<String> channelTitles) {
 		this.channelChatContents.clear();
 		for (String channelTitle : channelTitles) {
-			String textAreaMessage = String.join(SINGLE_SPACE, WELCOME_MESSAGE, channelTitle, NEW_LINE);
+			String channelMessage = SPECIAL_CHANNEL_MESSAGES.containsKey(channelTitle)
+					? SPECIAL_CHANNEL_MESSAGES.get(channelTitle)
+					: WELCOME_MESSAGE;
+			String textAreaMessage = String.join(SINGLE_SPACE, channelMessage, channelTitle, NEW_LINE);
 			this.channelChatContents.put(Channel.fromTitle(channelTitle), createTextArea(textAreaMessage));
 		}
 	}
@@ -485,7 +494,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 						try {
 							if (oldChannelName.equals("#speak-up")) {
 								textField.setEnabled(true);
-								if (chatClient.serverIF.getSpeakerUsername().equals(username)) {
+								if (username.equals(chatClient.serverIF.getSpeakerUsername())) {
 									chatClient.serverIF.stopSpeakUp();
 								}
 							}
@@ -494,14 +503,14 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 							if (selectedChannel.getTitle().equals("#infini")) {
 								if (!hasInfiniChannelBeenAccessedOnce) {
 									int val = chatClient.serverIF.getLastInfiniValue();
-									if (val != 0) {
-										String msg = "[Server] : " + val + "\n";
-										getCurrentTextArea().append(msg);
-										conversationTextArea.append(msg);
-										conversationTextArea
-												.setCaretPosition(conversationTextArea.getDocument().getLength());
-										hasInfiniChannelBeenAccessedOnce = true;
-									}
+									String startingMessage = val == 0 ? "Start with number 1"
+											: "Last number: " + String.valueOf(val);
+									String msg = "[Server] : " + startingMessage + "\n";
+									getCurrentTextArea().append(msg);
+									conversationTextArea.append(msg);
+									conversationTextArea
+											.setCaretPosition(conversationTextArea.getDocument().getLength());
+									hasInfiniChannelBeenAccessedOnce = true;
 								}
 							}
 							System.out.println("After Login Selected channel + " + selectedChannel);
@@ -521,14 +530,14 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	public void displayModal(String title, String message) {
 		log.warning(message);
-		
+
 		JLabel modalLabel = new JLabel(message, JLabel.CENTER);
 		modalLabel.setFont(MEIRYO_FONT_16);
 		JDialog dialog = new JDialog(frame, title);
 		dialog.add(modalLabel);
 		dialog.setModal(false); // IMPORTANT! Now the thread isn't blocked
-		dialog.setSize(500,200);
-		dialog.setLocationRelativeTo(null); //center of screen
+		dialog.setSize(500, 200);
+		dialog.setLocationRelativeTo(null); // center of screen
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.setVisible(true);
 	}
