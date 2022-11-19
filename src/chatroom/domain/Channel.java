@@ -7,6 +7,7 @@ public class Channel implements Serializable {
 
 	private static final long serialVersionUID = -3548424762934889766L;
 	private String title;
+	private boolean isSpecial;
 
 	public Channel() {
 	}
@@ -15,8 +16,21 @@ public class Channel implements Serializable {
 		this.title = title;
 	}
 
+	public Channel(String title, boolean isSpecial) {
+		this.title = title;
+		this.isSpecial = isSpecial;
+	}
+
 	public String getTitle() {
 		return this.title;
+	}
+
+	public void setIsSpecial(boolean isSpecial) {
+		this.isSpecial = isSpecial;
+	}
+
+	public boolean isSpecial() {
+		return this.isSpecial;
 	}
 
 	@Override
