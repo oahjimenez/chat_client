@@ -54,8 +54,11 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Border LEFT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 20, 20, 10);// top,r,b,l
 
 	private static final int CHAT_WIDTH = 60;
-	private static final int CHANNEL_PREFFERED_HEIGHT = 250;
+	private static final int CHANNEL_PREFFERED_HEIGHT = 220;
 	private static final int SPECIAL_CHANNEL_PREFFERED_HEIGHT = 200;
+
+	private static final int MAIN_FRAME_MINIMUM_WIDHT = 600;
+	private static final int MAIN_FRAME_MINIMUM_HEIGHT = 800;
 
 	private static final String APP_TITLE = "Discord Lite ™";
 
@@ -97,6 +100,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
 
 		frame = new JFrame(APP_TITLE);
+		frame.setMinimumSize(new Dimension(MAIN_FRAME_MINIMUM_WIDHT, MAIN_FRAME_MINIMUM_HEIGHT));
 
 		/*
 		 * intercept close method, inform server we are leaving
@@ -582,7 +586,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				name = textField.getText().trim();
 				if (name.length() != 0) {
 					this.username = name;
-					frame.setTitle(frame.getTitle()+" - "+ name + "'s console ");
+					frame.setTitle(frame.getTitle() + " - " + name + "'s console ");
 					textField.setText("");
 					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
 					getConnected(name);
