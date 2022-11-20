@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
@@ -50,7 +52,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
 	private static final Border RIGHT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 10, 20, 20);// top,r,b,l
 	private static final Border LEFT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 20, 20, 10);// top,r,b,l
+
 	private static final int CHAT_WIDTH = 60;
+	private static final int CHANNEL_PREFFERED_HEIGHT = 250;
+	private static final int SPECIAL_CHANNEL_PREFFERED_HEIGHT = 200;
 
 	private static final String APP_TITLE = "Discord Lite ™";
 
@@ -129,7 +134,10 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		JPanel channelContainerPanel = new JPanel(new BorderLayout());
 
 		channelPanel = getChannelPanel(channelTitles);
+		channelPanel.setPreferredSize(new Dimension(channelPanel.getPreferredSize().width, CHANNEL_PREFFERED_HEIGHT));
 		specialChannelPanel = getSpecialChannelPanel(channelTitles);
+		specialChannelPanel.setPreferredSize(
+				new Dimension(specialChannelPanel.getPreferredSize().width, SPECIAL_CHANNEL_PREFFERED_HEIGHT));
 
 		channelContainerPanel.add(channelPanel, BorderLayout.NORTH);
 		channelContainerPanel.add(specialChannelPanel, BorderLayout.SOUTH);
@@ -442,9 +450,9 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private void loadChannelAfterLogin() throws RemoteException {
 		List<String> channelTitles = chatClient.serverIF.getChannelsName();
 		List<String> regularChannelTitles = channelTitles.stream()
-				.filter(channel -> !SPECIAL_CHANNEL_MESSAGES.containsKey(channel)).toList();
+				.filter(channel -> !SPECIAL_CHANNEL_MESSAGES.containsKey(channel)).collect(Collectors.toList());
 		List<String> specialChannelTitles = channelTitles.stream()
-				.filter(channel -> SPECIAL_CHANNEL_MESSAGES.containsKey(channel)).toList();
+				.filter(channel -> SPECIAL_CHANNEL_MESSAGES.containsKey(channel)).collect(Collectors.toList());
 
 		initChannelContents(channelTitles);
 		selectedChannel = Channel.fromTitle(channelTitles.stream().findFirst().get()); // general channel by default
@@ -574,7 +582,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				name = textField.getText().trim();
 				if (name.length() != 0) {
 					this.username = name;
-					frame.setTitle(name + "'s console ");
+					frame.setTitle(frame.getTitle()+" - "+ name + "'s console ");
 					textField.setText("");
 					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
 					getConnected(name);
