@@ -213,16 +213,19 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				String input = textField.getText().trim();
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && sendButton.isEnabled() && !input.isEmpty()) {
-					try {
-						System.out.println("message sent is :" + input + ":message sent is");
-						sendMessage(input);
-						textField.setText("");
-
-						System.out.println("Sending message : " + message);
-
-					} catch (RemoteException error) {
-						log.severe(error.getMessage());
+				if (e.getKeyCode() == KeyEvent.VK_ENTER && !input.isEmpty()) {
+					if(sendButton.isEnabled()) {
+						try {
+							sendMessage(input);
+						} catch (RemoteException error) {
+							log.severe(error.getMessage());
+						}
+					}else{
+						try {
+							registerUser();
+						} catch (RemoteException ex) {
+							throw new RuntimeException(ex);
+						}
 					}
 				}
 			}
@@ -407,6 +410,30 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 */
 	private void sendMessage(String chatMessage) throws RemoteException {
 		chatClient.serverIF.updateChat(name, chatMessage, selectedChannel.getTitle());
+		textField.setText("");
+		System.out.println("Sending message : " + message);
+	}
+
+	private void registerUser() throws RemoteException {
+		name = textField.getText().trim();
+		if (name.length() != 0) {
+			frame.setTitle(name + "'s console ");
+			textField.setText("");
+			getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
+			getConnected(name);
+			if (!chatClient.connectionProblem) {
+				startButton.setEnabled(false);
+				sendButton.setEnabled(true);
+
+				try {
+					loadChannelAfterLogin();
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+			}
+		} else {
+			JOptionPane.showMessageDialog(frame, "Enter your name to Start");
+		}
 	}
 
 	/**
@@ -583,31 +610,12 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		try {
 			// get connected to chat service
 			if (e.getSource() == startButton) {
-				name = textField.getText().trim();
-				if (name.length() != 0) {
-					this.username = name;
-					frame.setTitle(frame.getTitle() + " - " + name + "'s console ");
-					textField.setText("");
-					getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
-					getConnected(name);
-					if (!chatClient.connectionProblem) {
-						startButton.setEnabled(false);
-						sendButton.setEnabled(true);
-
-						try {
-							loadChannelAfterLogin();
-						} catch (RemoteException e1) {
-							e1.printStackTrace();
-						}
-					}
-				} else {
-					JOptionPane.showMessageDialog(frame, "Enter your name to Start");
-				}
+				registerUser();
 			}
 
 			// get text and clear textField
 			message = textField.getText().trim();
-			if (e.getSource() == sendButton && message.length() != 0) {
+			if (e.getSource() == sendButton && !message.isEmpty()) {
 				textField.setText("");
 				sendMessage(message);
 				System.out.println("Sending message : " + message);
