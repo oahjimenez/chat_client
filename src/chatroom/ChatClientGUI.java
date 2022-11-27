@@ -38,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -45,9 +46,15 @@ import javax.swing.event.ListSelectionListener;
 import chatroom.domain.Channel;
 import chatroom.util.Constants;
 
+/**
+ * Client graphical interface
+ */
 public class ChatClientGUI extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
+
+	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
+
 	private static final Font MEIRYO_FONT_14 = new Font("Meiryo", Font.PLAIN, 14);
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
 	private static final Border RIGHT_BLANK_BORDER = BorderFactory.createEmptyBorder(20, 10, 20, 20);// top,r,b,l
@@ -68,27 +75,25 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final Map<String, String> SPECIAL_CHANNEL_MESSAGES = Map.of(SPECIAL_CHANNEL_INFINI,
 			Constants.Messages.INFINI_MESSAGE, SPECIAL_CHANNEL_SPEAKUP, Constants.Messages.SPEAK_UP_MESSAGE);
 
-	private String username = null;
+	private String username;
+	private Channel selectedChannel;
 
-	protected JTextArea textField;
 	private String message;
 	private ChatClient chatClient;
-	private JList<String> userList, channelList, specialChannelList;
-	private DefaultListModel<String> listModel, channelListModel, specialChannelListModel;
 
-	protected JTextArea userArea;
+	private JList<String> userList, channelList, specialChannelList;
+
 	protected JFrame frame;
+	protected Container container;
+
+	protected JTextArea userArea, textField, conversationTextArea;
 	protected JButton privateMsgButton, startButton, sendButton, speakUpButton;
-	protected JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel, specialChannelPanel;
+	private DefaultListModel<String> listModel, channelListModel, specialChannelListModel;
+	private JPanel clientPanel, userPanel, textPanel, inputPanel, channelPanel, specialChannelPanel;
 
 	protected Map<Channel, JTextArea> channelChatContents = new LinkedHashMap<>();
-	protected Channel selectedChannel;
-	protected JTextArea conversationTextArea;
 
-	protected Container container;
-	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
-
-	protected boolean hasInfiniChannelBeenAccessedOnce = false;
+	protected boolean hasInfiniChannelBeenAccessedOnce;
 
 	public ChatClientGUI() {
 		initGUIContents();
@@ -214,13 +219,13 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			public void keyPressed(KeyEvent e) {
 				String input = textField.getText().trim();
 				if (e.getKeyCode() == KeyEvent.VK_ENTER && !input.isEmpty()) {
-					if(sendButton.isEnabled()) {
+					if (sendButton.isEnabled()) {
 						try {
 							sendMessage(input);
 						} catch (RemoteException error) {
 							log.severe(error.getMessage());
 						}
-					}else{
+					} else {
 						try {
 							registerUser();
 						} catch (RemoteException ex) {
@@ -411,7 +416,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private void sendMessage(String chatMessage) throws RemoteException {
 		chatClient.serverIF.updateChat(username, chatMessage, selectedChannel.getTitle());
 		textField.setText("");
-		System.out.println("Sending message : " + message);
+		log.info("Sending message : " + chatMessage);
 	}
 
 	private void registerUser() throws RemoteException {
@@ -616,9 +621,9 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			// get text and clear textField
 			message = textField.getText().trim();
 			if (e.getSource() == sendButton && !message.isEmpty()) {
-				textField.setText("");
+				textField.setText(Constants.EMPTY_STRING);
 				sendMessage(message);
-				System.out.println("Sending message : " + message);
+				log.info("Sending message : " + message);
 			}
 
 			// send a private message, to selected users
@@ -656,5 +661,38 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 			log.severe(remoteExc.getMessage());
 		}
 
+	}
+
+	public void messageFromServerToChannel(String message, String channel) {
+		if (channel.equals("#pm")) {
+			getCurrentTextArea().append(message);
+			conversationTextArea.append(message);
+			conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+			return;
+		}
+		appendTextToChatTextAreaForChannel(message, channel);
+		if (selectedChannel.getTitle().equals(channel)) {
+			conversationTextArea.append(message);
+			conversationTextArea.setCaretPosition(conversationTextArea.getDocument().getLength());
+		}
+	}
+
+	public void serverIsClosing() {
+		startButton.setEnabled(false);
+		sendButton.setEnabled(false);
+		privateMsgButton.setEnabled(false);
+		speakUpButton.setEnabled(false);
+		conversationTextArea.setEnabled(false);
+		textField.setEditable(false);
+		Timer timer = new Timer(2000, new ActionListener() {
+			  @Override
+			  public void actionPerformed(ActionEvent arg0) {
+				System.exit(0);
+				setVisible(false);
+				dispose();
+			  }
+			});
+		timer.setRepeats(false); // Only execute once
+		timer.start();
 	}
 }
