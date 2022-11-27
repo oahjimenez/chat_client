@@ -71,7 +71,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private String username = null;
 
 	protected JTextArea textField;
-	private String name, message;
+	private String message;
 	private ChatClient chatClient;
 	private JList<String> userList, channelList, specialChannelList;
 	private DefaultListModel<String> listModel, channelListModel, specialChannelListModel;
@@ -112,7 +112,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 				if (chatClient != null && chatClient.serverIF != null) {
 					try {
 						sendMessage(Constants.Messages.LOGOUT_MESSAGE);
-						chatClient.serverIF.leaveChat(name);
+						chatClient.serverIF.leaveChat(username);
 					} catch (RemoteException e) {
 						log.severe(e.getMessage());
 					}
@@ -409,18 +409,18 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * Send a message, to be relayed to all chatters
 	 */
 	private void sendMessage(String chatMessage) throws RemoteException {
-		chatClient.serverIF.updateChat(name, chatMessage, selectedChannel.getTitle());
+		chatClient.serverIF.updateChat(username, chatMessage, selectedChannel.getTitle());
 		textField.setText("");
 		System.out.println("Sending message : " + message);
 	}
 
 	private void registerUser() throws RemoteException {
-		name = textField.getText().trim();
-		if (name.length() != 0) {
-			frame.setTitle(name + "'s console ");
+		username = textField.getText().trim();
+		if (!username.isEmpty()) {
+			frame.setTitle(username + "'s console ");
 			textField.setText("");
-			getCurrentTextArea().append("username : " + name + " connecting to chat...\n");
-			getConnected(name);
+			getCurrentTextArea().append("username : " + username + " connecting to chat...\n");
+			getConnected(username);
 			if (!chatClient.connectionProblem) {
 				startButton.setEnabled(false);
 				sendButton.setEnabled(true);
@@ -440,7 +440,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * Send a message, to be relayed, only to selected chatters
 	 */
 	private void sendPrivate(int[] privateList) throws RemoteException {
-		String privateMessage = "[PM from " + name + "] :" + message + "\n";
+		String privateMessage = "[PM from " + username + "] :" + message + "\n";
 		chatClient.serverIF.sendPM(privateList, privateMessage);
 	}
 
@@ -546,7 +546,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					}
 				}
 
-				chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
+				chatClient.serverIF.goToChannel(username, selectedChannel.getTitle());
 				System.out.println("After Login Selected channel + " + selectedChannel);
 			} catch (RemoteException e) {
 				log.severe(e.getMessage());
@@ -581,7 +581,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					}
 				}
 
-				chatClient.serverIF.goToChannel(name, selectedChannel.getTitle());
+				chatClient.serverIF.goToChannel(username, selectedChannel.getTitle());
 				if (selectedChannel.getTitle().equals(SPECIAL_CHANNEL_INFINI)) {
 					if (!hasInfiniChannelBeenAccessedOnce) {
 						int val = chatClient.serverIF.getLastInfiniValue();
