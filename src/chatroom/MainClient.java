@@ -2,30 +2,22 @@ package chatroom;
 
 import java.util.logging.Logger;
 
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
+import chatroom.util.LookAndFeelHandler;
 
+/**
+ * Client instantiation entry point
+ */
 public class MainClient {
-
-	private static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
 
 	private static final Logger log = Logger.getLogger(MainClient.class.getName());
 
 	public static void main(String[] args) {
-		setLookAndFeelInfo(NIMBUS_LOOK_AND_FEEL);
-		new ChatClientGUI();
-	}
-
-	public static void setLookAndFeelInfo(String LookAndFeelName) {
 		try {
-			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if (LookAndFeelName.equals(info.getName())) {
-					UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
+			LookAndFeelHandler.setLookAndFeelInfo(LookAndFeelHandler.NIMBUS_LOOK_AND_FEEL);
+			new ChatClientGUI();
 		} catch (Exception e) {
 			log.severe(e.getMessage());
 		}
 	}
+
 }
