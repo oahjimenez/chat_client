@@ -5,7 +5,7 @@ public class Constants {
 	public static final String NEW_LINE = System.lineSeparator();
 	public static final String SINGLE_SPACE = " ";
 	public static final String EMPTY_STRING = "";
-
+	
 	public static class Messages {
 
 		public static final String WELCOME_MESSAGE = "Welcome enter your name and press Start to begin\n";

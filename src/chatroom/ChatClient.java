@@ -9,7 +9,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.logging.Logger;
 
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
