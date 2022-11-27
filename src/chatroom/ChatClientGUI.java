@@ -483,6 +483,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	private void loadChannelAfterLogin() throws RemoteException {
 		List<String> channelTitles = chatClient.serverIF.getChannelsName();
+		chatClient.serverIF.subscribeToChannels(username, channelTitles);
 		List<String> regularChannelTitles = channelTitles.stream()
 				.filter(channel -> !SPECIAL_CHANNEL_MESSAGES.containsKey(channel)).collect(Collectors.toList());
 		List<String> specialChannelTitles = channelTitles.stream()
@@ -549,7 +550,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					}
 				}
 
-				chatClient.serverIF.goToChannel(username, selectedChannel.getTitle());
 				System.out.println("After Login Selected channel + " + selectedChannel);
 			} catch (RemoteException e) {
 				log.severe(e.getMessage());
@@ -584,7 +584,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 					}
 				}
 
-				chatClient.serverIF.goToChannel(username, selectedChannel.getTitle());
 				if (selectedChannel.getTitle().equals(SPECIAL_CHANNEL_INFINI)) {
 					if (!hasInfiniChannelBeenAccessedOnce) {
 						int val = chatClient.serverIF.getLastInfiniValue();
