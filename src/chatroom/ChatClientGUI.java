@@ -51,7 +51,7 @@ import chatroom.util.Constants;
  */
 public class ChatClientGUI extends JFrame implements ActionListener {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -989721431765931172L;
 
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
 
@@ -464,6 +464,9 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	public void updateClientPanel(String[] currentUsers) {
+		if (currentUsers.length < 2) {
+			privateMsgButton.setEnabled(false);
+		}
 		listModel.clear();
 		listModel.addAll(Arrays.asList(currentUsers));
 		userPanel.revalidate();

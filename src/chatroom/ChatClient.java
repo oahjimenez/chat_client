@@ -9,31 +9,36 @@ import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 
+import chatroom.util.Constants;
+
+/**
+ * Client implementation of remote interface
+ */
 public class ChatClient extends UnicastRemoteObject implements ChatClientInterface {
 
 	private static final long serialVersionUID = 7468891722773409712L;
+	
+	private static final Logger log = Logger.getLogger(ChatClient.class.getName());
 
 	private static final String HOSTNAME = "localhost";
 	private static final int COM_PORT = 1009;
 	private static final String SERVICE_NAME = "GroupChatService";
+	private static final String USER_LISTENER_SERVICE_NAME = "ClientListenService";
 	private static final String RMI_URI = String.format("rmi://%s:%s/", HOSTNAME, COM_PORT);
-	private static final String SERVER_UNAVAILABLE_MESSAGE = "The server seems to be unavailable\nPlease try later";
-	private static final String CONNECTION_PROBLEM_MESSAGE = "Connection problem";
 	
 	private static final String SERVER_EXCEPTION_TITLE = "Server Exception";
 
 	protected ChatClientGUI chatGUI;
-	private String clientServiceName, userName;
+	protected String clientServiceName, userName;
 	protected ChatServerInterface serverIF;
 	protected boolean connectionProblem = Boolean.FALSE;
 
-	private static final Logger log = Logger.getLogger(ChatClient.class.getName());
 
 	public ChatClient(ChatClientGUI aChatGUI, String userName) throws RemoteException {
 		super();
 		this.chatGUI = aChatGUI;
 		this.userName = userName;
-		this.clientServiceName = "ClientListenService_" + userName;
+		this.clientServiceName = USER_LISTENER_SERVICE_NAME.concat("_").concat(userName);
 	}
 
 	public ChatServerInterface getRemoteServer() throws MalformedURLException, RemoteException, NotBoundException {
@@ -52,7 +57,7 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 			Naming.rebind(RMI_URI + clientServiceName, this);
 			serverIF = getRemoteServer();
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(chatGUI.frame, SERVER_UNAVAILABLE_MESSAGE, CONNECTION_PROBLEM_MESSAGE,
+			JOptionPane.showMessageDialog(chatGUI.frame, Constants.Messages.SERVER_UNAVAILABLE_MESSAGE, Constants.Messages.CONNECTION_PROBLEM_MESSAGE,
 					JOptionPane.ERROR_MESSAGE);
 			connectionProblem = true;
 			log.severe(e.getMessage());
@@ -77,7 +82,7 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 			log.severe(e.getMessage());
 		} catch (Exception e) {
 			connectionProblem=true;
-			JOptionPane.showMessageDialog(chatGUI.frame, e.getMessage(), CONNECTION_PROBLEM_MESSAGE,
+			JOptionPane.showMessageDialog(chatGUI.frame, e.getMessage(), Constants.Messages.CONNECTION_PROBLEM_MESSAGE,
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -104,9 +109,6 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	 */
 	@Override
 	public void updateUserList(String[] currentUsers) throws RemoteException {
-		if (currentUsers.length < 2) {
-			chatGUI.privateMsgButton.setEnabled(false);
-		}
 		chatGUI.updateClientPanel(currentUsers);
 	}
 	

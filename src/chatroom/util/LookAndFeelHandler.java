@@ -4,6 +4,9 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
+/**
+ * Client look and feel handler
+ */
 public class LookAndFeelHandler {
 
 	public static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";

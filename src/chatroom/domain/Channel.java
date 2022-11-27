@@ -3,6 +3,9 @@ package chatroom.domain;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * Client channel POJO
+ */
 public class Channel implements Serializable {
 
 	private static final long serialVersionUID = -3548424762934889766L;
