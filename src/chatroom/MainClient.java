@@ -14,7 +14,8 @@ public class MainClient {
 	public static void main(String[] args) {
 		try {
 			LookAndFeelHandler.setLookAndFeelInfo(LookAndFeelHandler.NIMBUS_LOOK_AND_FEEL);
-			new ChatClientGUI();
+			ChatClientGUI chatClientGUI = new ChatClientGUI();
+			chatClientGUI.initGUIContents();
 		} catch (Exception e) {
 			log.severe(e.getMessage());
 		}

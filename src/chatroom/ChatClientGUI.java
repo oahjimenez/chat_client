@@ -96,24 +96,23 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	protected boolean hasInfiniChannelBeenAccessedOnce;
 
 	public ChatClientGUI() {
-		initGUIContents();
+	}
+
+	public JTextArea getCurrentTextArea() {
+		return channelChatContents.get(selectedChannel);
 	}
 
 	public void initGUIContents() {
 		String[] channelTitles = { Constants.Messages.CHANNEL_BEFORE_LOGIN_MESSAGE };
 		initChannelContents(Arrays.asList(channelTitles));
-		selectedChannel = Channel.fromTitle(channelTitles[0]); // general channel by default
+		selectedChannel = Channel.fromTitle(channelTitles[0]); // first channel by default
 
 		frame = new JFrame(APP_TITLE);
 		frame.setMinimumSize(new Dimension(MAIN_FRAME_MINIMUM_WIDHT, MAIN_FRAME_MINIMUM_HEIGHT));
-
-		/*
-		 * intercept close method, inform server we are leaving
-		 */
+		// intercept close method, inform server we are leaving
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent windowEvent) {
-
 				if (chatClient != null && chatClient.serverIF != null) {
 					try {
 						sendMessage(Constants.Messages.LOGOUT_MESSAGE);
@@ -168,10 +167,6 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 		frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		frame.setVisible(true);
-	}
-
-	public JTextArea getCurrentTextArea() {
-		return channelChatContents.get(selectedChannel);
 	}
 
 	public void appendTextToChatTextAreaForChannel(String msg, String channelName) {
@@ -422,7 +417,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private void registerUser() throws RemoteException {
 		username = textField.getText().trim();
 		if (!username.isEmpty()) {
-			frame.setTitle(username + "'s console ");
+			frame.setTitle(String.format("%s - %s's console",APP_TITLE,username));
 			textField.setText("");
 			getCurrentTextArea().append("username : " + username + " connecting to chat...\n");
 			getConnected(username);
@@ -688,13 +683,13 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		conversationTextArea.setEnabled(false);
 		textField.setEditable(false);
 		Timer timer = new Timer(2000, new ActionListener() {
-			  @Override
-			  public void actionPerformed(ActionEvent arg0) {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
 				System.exit(0);
 				setVisible(false);
 				dispose();
-			  }
-			});
+			}
+		});
 		timer.setRepeats(false); // Only execute once
 		timer.start();
 	}

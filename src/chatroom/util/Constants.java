@@ -8,6 +8,7 @@ public class Constants {
 	public static final String NEW_LINE = System.lineSeparator();
 	public static final String SINGLE_SPACE = " ";
 	public static final String EMPTY_STRING = "";
+	public static final String HYPHEN = "-";
 	
 	public static class Messages {
 
