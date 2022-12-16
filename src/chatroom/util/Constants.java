@@ -20,6 +20,7 @@ public class Constants {
 		
 		public static final String SERVER_UNAVAILABLE_MESSAGE = "The server seems to be unavailable\nPlease try later";
 		public static final String CONNECTION_PROBLEM_MESSAGE = "Connection problem";
+		public static final Object USERNAME_ALREADY_TAKEN_MESSAGE = "This username is already used!";
 
 	}
 

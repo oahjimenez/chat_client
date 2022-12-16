@@ -17,7 +17,7 @@ import chatroom.util.Constants;
 public class ChatClient extends UnicastRemoteObject implements ChatClientInterface {
 
 	private static final long serialVersionUID = 7468891722773409712L;
-	
+
 	private static final Logger log = Logger.getLogger(ChatClient.class.getName());
 
 	private static final String HOSTNAME = "localhost";
@@ -25,14 +25,13 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	private static final String SERVICE_NAME = "GroupChatService";
 	private static final String USER_LISTENER_SERVICE_NAME = "ClientListenService";
 	private static final String RMI_URI = String.format("rmi://%s:%s/", HOSTNAME, COM_PORT);
-	
+
 	private static final String SERVER_EXCEPTION_TITLE = "Server Exception";
 
 	protected ChatClientGUI chatGUI;
 	protected String clientServiceName, userName;
 	protected ChatServerInterface serverIF;
 	protected boolean connectionProblem = Boolean.FALSE;
-
 
 	public ChatClient(ChatClientGUI aChatGUI, String userName) throws RemoteException {
 		super();
@@ -50,22 +49,42 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	 * then send our details
 	 * 
 	 * @throws RemoteException
+	 * @throws MalformedURLException
 	 */
-	public void startClient() throws RemoteException {
+	public void startClient() throws RemoteException, MalformedURLException {
 		String[] details = { userName, HOSTNAME, String.valueOf(COM_PORT), clientServiceName };
 		try {
-			Naming.rebind(RMI_URI + clientServiceName, this);
 			serverIF = getRemoteServer();
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(chatGUI.frame, Constants.Messages.SERVER_UNAVAILABLE_MESSAGE, Constants.Messages.CONNECTION_PROBLEM_MESSAGE,
-					JOptionPane.ERROR_MESSAGE);
+			log.severe(e.getMessage());
+			JOptionPane.showMessageDialog(chatGUI.frame, Constants.Messages.SERVER_UNAVAILABLE_MESSAGE,
+					Constants.Messages.CONNECTION_PROBLEM_MESSAGE, JOptionPane.ERROR_MESSAGE);
+			connectionProblem = true;
+		}
+		if (!connectionProblem) {
+			userLogin(details);
+		}
+		log.info("Client Listen RMI Server is running...\n");
+	}
+
+	/**
+	 * Checks if username is available and request a server suscription
+	 * 
+	 * @param details
+	 */
+	private void userLogin(String[] details) {
+		try {
+			if (serverIF.isUsernameAvailable(userName)) {
+				Naming.rebind(RMI_URI + clientServiceName, this);
+				registerWithServer(details);
+			} else {
+				connectionProblem = true;
+				chatGUI.showUsernameNotAvailableDialog(userName);
+			}
+		} catch (Exception e) {
 			connectionProblem = true;
 			log.severe(e.getMessage());
 		}
-		if (!connectionProblem) {
-			registerWithServer(details);
-		}
-		log.info("Client Listen RMI Server is running...\n");
 	}
 
 	/**
@@ -73,18 +92,11 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	 * out interest in joining the chat
 	 * 
 	 * @param details
+	 * @throws RemoteException
 	 */
-	public void registerWithServer(String[] details) {
-		try {
-			serverIF.passIDentity(this.ref);
-			serverIF.registerListener(details);
-		} catch (RemoteException e) {
-			log.severe(e.getMessage());
-		} catch (Exception e) {
-			connectionProblem=true;
-			JOptionPane.showMessageDialog(chatGUI.frame, e.getMessage(), Constants.Messages.CONNECTION_PROBLEM_MESSAGE,
-					JOptionPane.ERROR_MESSAGE);
-		}
+	public void registerWithServer(String[] details) throws RemoteException {
+		serverIF.passIDentity(this.ref);
+		serverIF.registerListener(details);
 	}
 
 	/**
@@ -93,17 +105,17 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	@Override
 	public void messageFromServerToChannel(String message, String channel) throws RemoteException {
 		log.info(message);
-		chatGUI.messageFromServerToChannel(message,channel);
+		chatGUI.messageFromServerToChannel(message, channel);
 	}
-	
+
 	/**
 	 * Receive a exception from the chat server
 	 */
 	@Override
 	public void exceptionFromServer(String message) throws RemoteException {
-		chatGUI.displayModal(SERVER_EXCEPTION_TITLE,message);
+		chatGUI.displayModal(SERVER_EXCEPTION_TITLE, message);
 	}
-	
+
 	/**
 	 * A method to update the display of users currently connected to the server
 	 */
@@ -111,9 +123,9 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	public void updateUserList(String[] currentUsers) throws RemoteException {
 		chatGUI.updateClientPanel(currentUsers);
 	}
-	
+
 	@Override
-	public void serverIsClosing() throws RemoteException{
+	public void serverIsClosing() throws RemoteException {
 		chatGUI.serverIsClosing();
 	}
 }

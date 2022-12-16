@@ -453,7 +453,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		try {
 			chatClient = new ChatClient(this, cleanedUserName);
 			chatClient.startClient();
-		} catch (RemoteException e) {
+		} catch (Exception e) {
 			log.severe(e.getMessage());
 		}
 	}
@@ -691,5 +691,11 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		});
 		timer.setRepeats(false); // Only execute once
 		timer.start();
+	}
+
+	public void showUsernameNotAvailableDialog(String takenUsername) {
+		JOptionPane.showMessageDialog(frame, Constants.Messages.USERNAME_ALREADY_TAKEN_MESSAGE, Constants.Messages.CONNECTION_PROBLEM_MESSAGE,
+				JOptionPane.ERROR_MESSAGE);
+		
 	}
 }
