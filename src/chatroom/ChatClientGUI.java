@@ -15,6 +15,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -54,6 +56,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	private static final long serialVersionUID = -989721431765931172L;
 
 	protected static final Logger log = Logger.getLogger(ChatClientGUI.class.getName());
+	
+	public static final DateTimeFormatter FULL_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss a");
 
 	private static final Font MEIRYO_FONT_14 = new Font("Meiryo", Font.PLAIN, 14);
 	private static final Font MEIRYO_FONT_16 = new Font("Meiryo", Font.PLAIN, 16);
@@ -412,9 +416,28 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 * Send a message, to be relayed to all chatters
 	 */
 	private void sendMessage(String chatMessage) throws RemoteException {
-		chatClient.serverIF.updateChat(username, chatMessage, selectedChannel.getTitle());
-		textField.setText("");
-		log.info("Sending message : " + chatMessage);
+		
+		if (!SPECIAL_CHANNEL_INFINI.equals(selectedChannel.getTitle())) {
+			//display my own message
+			messageFromServerToChannel(getFormattedSelfSentMessage(chatMessage), selectedChannel.getTitle());
+		}
+		//send my message asynchronously
+		 Thread asyncSend = new Thread(){
+		    public void run(){
+				try {
+					textField.setText("");
+					log.info("Sending message : " + chatMessage);
+					chatClient.serverIF.updateChat(username, chatMessage, selectedChannel.getTitle());
+				} catch (RemoteException e) {
+					log.info("Error sending asynchronours message"+e.getMessage());
+				}
+		      }
+		};
+		asyncSend.run();
+	}
+	
+	private String getFormattedSelfSentMessage(String message) {
+		return String.format("[%s] me: %s\n", LocalDateTime.now().format(FULL_DATE_FORMATTER),message);
 	}
 
 	private void registerUser() throws RemoteException {
@@ -663,6 +686,11 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 
 	}
 
+	/**
+	 * Display message received from server.
+	 * @param message
+	 * @param channel
+	 */
 	public void messageFromServerToChannel(String message, String channel) {
 		if (channel.equals("#pm")) {
 			getCurrentTextArea().append(message);

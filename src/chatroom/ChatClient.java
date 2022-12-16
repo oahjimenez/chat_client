@@ -2,7 +2,6 @@ package chatroom;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.logging.Logger;
@@ -40,10 +39,6 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 		this.clientServiceName = USER_LISTENER_SERVICE_NAME.concat("_").concat(userName);
 	}
 
-	public ChatServerInterface getRemoteServer() throws MalformedURLException, RemoteException, NotBoundException {
-		return (ChatServerInterface) Naming.lookup(RMI_URI + SERVICE_NAME);
-	}
-
 	/**
 	 * Register our own listening service/interface lookup the server RMI interface,
 	 * then send our details
@@ -54,7 +49,7 @@ public class ChatClient extends UnicastRemoteObject implements ChatClientInterfa
 	public void startClient() throws RemoteException, MalformedURLException {
 		String[] details = { userName, HOSTNAME, String.valueOf(COM_PORT), clientServiceName };
 		try {
-			serverIF = getRemoteServer();
+			serverIF = (ChatServerInterface) Naming.lookup(RMI_URI + SERVICE_NAME);
 		} catch (Exception e) {
 			log.severe(e.getMessage());
 			JOptionPane.showMessageDialog(chatGUI.frame, Constants.Messages.SERVER_UNAVAILABLE_MESSAGE,
