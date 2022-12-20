@@ -200,7 +200,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 		for (String channelTitle : channelTitles) {
 			String channelMessage = SPECIAL_CHANNEL_MESSAGES.containsKey(channelTitle)
 					? SPECIAL_CHANNEL_MESSAGES.get(channelTitle)
-					: Constants.Messages.WELCOME_MESSAGE;
+					: Constants.Messages.CHAT_MESSAGE;
 			String textAreaMessage = String.join(Constants.SINGLE_SPACE, channelMessage, channelTitle,
 					Constants.NEW_LINE);
 			this.channelChatContents.put(Channel.fromTitle(channelTitle), createTextArea(textAreaMessage));
@@ -467,6 +467,8 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	 */
 	private void sendPrivate(int[] privateList) throws RemoteException {
 		String privateMessage = "[PM from " + username + "] :" + message + "\n";
+		String privateToMessage = "[PM to " + username + "] :" + message + "\n";
+		messageFromServerToChannel(getFormattedSelfSentMessage(privateToMessage), selectedChannel.getTitle());
 		chatClient.serverIF.sendPM(privateList, privateMessage);
 	}
 
@@ -485,9 +487,7 @@ public class ChatClientGUI extends JFrame implements ActionListener {
 	}
 
 	public void updateClientPanel(String[] currentUsers) {
-		if (currentUsers.length < 2) {
-			privateMsgButton.setEnabled(false);
-		}
+		privateMsgButton.setEnabled(currentUsers.length >= 2);
 		listModel.clear();
 		listModel.addAll(Arrays.asList(currentUsers));
 		userPanel.revalidate();
